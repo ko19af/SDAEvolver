@@ -118,8 +118,8 @@ void Topology::ChooseNodeLocations(int x, int y, int numNodes){
 
 int Topology::ShortestPath(int position, vector<double> &sPath){// initialize distance from start node to all others at max value)
 
-    for (int x = 0; x < position; x++){ // go through the row recording the connections for the current position
-        if (connections[position][x] == 1){ // if there is a connection to explore
+    for (int x = 0; x < connections.size(); x++){ // go through row recording the connections for current position
+        if (connections[position][x] == 1 && position != x){ // if there is a connection to explore
             int x1, x2, y1, y2;
             findNode(x1, y1, position + 1); // find x and y co-ordinate of node we are at
             findNode(x2, y2, x + 1); // find x and y co-ordinate of node we wish to calculate distance to
@@ -131,18 +131,6 @@ int Topology::ShortestPath(int position, vector<double> &sPath){// initialize di
             }
         }
 
-    for (int y = position + 1; y < connections.size(); y++){// go through the coloumn recording the connections for the current position
-        if (connections[y][position] == 1){ // if there is a connection to explore
-            int x1, x2, y1, y2;
-            findNode(x1, y1, position + 1);// find x and y co-ordinate of node we are at
-            findNode(x2, y2, y + 1);// find x and y co-ordinate of node we wish to calculate distance to
-            int dist = sqrt(pow((x2 - x1),2) + pow((y2 - y1),2));//caluclate euclidean distance
-            if(dist + sPath[position] < sPath[y]){// compare distance
-                sPath[y] = dist + sPath[position];// if shorter path update distance in shorter path vector
-                ShortestPath(y, sPath);// recalculate distance to all other nodes from that node to find shorter paths
-            } 
-        }
-    }
     return 0;
 }
 
@@ -174,17 +162,18 @@ void Topology::findNode(int &x, int &y, int node){
 
 void Topology::setConnections(vector<int> c, bool verbose){
     
-    vector<vector<int>> connections({{0,0,0,0,0},
-                                     {1,0,0,0,0},
-                                     {0,1,0,0,0},
-                                     {1,0,0,0,0},
+    vector<vector<int>> connections({{0,1,0,1,0},
+                                     {1,0,1,0,0},
+                                     {0,1,0,0,1},
+                                     {1,0,0,0,1},
                                      {0,0,1,1,0}});
 
     // vector<vector<int>> connections(tNumNodes, vector<int>(tNumNodes, 0));
     // int pos = 0;// keep track of position in SDA connection vector
-    // for (int y = 1; y < connections.size(); y++){// fill th bottom left triangle of connection matrix
-    //     for (int x = 0; x < y; x++){
+    // for (int y = 0; y < connections.size(); y++){// fill the connection matrix
+    //     for (int x = 0; x < connections[0].size(); x++){
     //         connections[y][x] = c[pos];
+    //         connections[x][y] = c[pos];
     //         pos++;// increment position in SDA connection vector
     //     }
     // }
