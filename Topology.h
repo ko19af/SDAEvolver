@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <bits/stdc++.h>
 
 using namespace std;
 
@@ -19,18 +20,23 @@ public:
 
     vector<vector<bool>> network;
     vector<vector<int>> connections;
-    int numNodes;// variable representing number of fog layer nodes present in the network
+    vector<vector<double>> data;
+    vector<vector<double>> trafficMatrix;// two dimensional vector tracking the incoming and ougoing traffic from a node in the network
+    int numNodes; // variable representing number of transmission nodes present in the network
     int numCNodes;// varialbe representing total number of cloud nodes in the topology
-    int numENodes;
+    int numENodes;// number of edge/fog nodes present in the network
     int tNumNodes; // variable representing total number of nodes in the network
 
 private:
     void PrintLayout();
     void printConnections();
-    int ChooseStart(int x, int numStarts);
-    int ChooseEnd(int y, int x, int numEnds);
     void ChooseNodeLocations(int x, int y, int numNodes);
     void findNode(int &x, int &y, int node);
+    void EdgeTraffic(int numStarts, int maxOut = 10000, int upper = 20, int lower = 5);
+    void DistributeTraffic();
+    int ChooseStart(int x, int numStarts);
+    int ChooseEnd(int y, int x, int numEnds);
+    
 };
 
 #endif // Topology_H

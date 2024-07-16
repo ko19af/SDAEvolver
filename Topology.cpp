@@ -8,19 +8,75 @@
 Topology::Topology(int x, int y, int starts, int ends, int numNodes){
     
     vector<vector<bool>> network(y, vector<bool>(x, false));
-
+    
     this->network = network;
     this->numNodes = numNodes;
     this->numCNodes = ends;
     this->numENodes = starts;
     this->tNumNodes = numNodes + ends + starts; // calculate number of nodes in Topology
 
+    vector<vector<double>> trafficMatrix(tNumNodes, vector<double>(tNumNodes, 0.0));
+    this->trafficMatrix = trafficMatrix;
+
     srand(time(0));
 
+    EdgeTraffic(starts);
     ChooseStart(x, starts);
     ChooseEnd(y, x, ends);
     ChooseNodeLocations(x, y, numNodes);
     PrintLayout();
+}
+
+/**
+ * This method will randomly define the traffic emitting from the designated nodes representing an aggregation
+ * of various edge and fog nodes in a network.
+ * 
+ * @param numStarts is the number of nodes pushing data into the network towards the cloud layer
+ * @param maxOut is the maximum amount of data a node is permitted to transmit (units in mbps)
+ * @param upper is the upperlimit of a data stream emitting from a node (units in mbps)
+ * @param lower is the lowerlimit of a data stream emitting from a node (units in mbps)
+ */
+
+void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
+    vector<vector<double>> data(numStarts);
+
+    for (int x = 0; x < numStarts; x++){
+        double output = 0;
+        while(output < maxOut){
+            double d = (rand()/(double)RAND_MAX)*(upper-lower)+lower;
+            if(output + d > maxOut) break;
+            data[x].push_back(d);
+            output += d;
+        }
+
+        trafficMatrix[0][x] = output;
+    }
+    this->data = data;
+}
+
+/**
+ * This method pushes the data through the network based on the connections established from the SDA.
+ * Data is pushed through a connection based on the cumulative amount of data being pushed to a node,
+ * meaning the node receving the least amount of data will receive the data stream.
+ */
+
+void::Topology::DistributeTraffic(){
+    for (int node = 0; node < tNumNodes - numCNodes; node++){// for each node (starting from edge node & excluding cloud nodes)
+        if (data[node].size() > 0){// that has data to distribute
+            for (int d = 0; d < data[node].size(); d++){// go through data being sent out
+                int insert = 0;// node receiving the data
+                double best = DBL_MAX;// lowest impact on the node receving the data
+                for (int c = numENodes; c < connections[0].size(); c++){// find node that increases the least with new data
+                    if (connections[node][c] == 1 && trafficMatrix[node][c] + data[node][d] < best){// (Check to change it based on total amount a node is receving rather than a single connection)
+                        insert = c;
+                        best = trafficMatrix[node][c] + data[node][d];
+                    }
+                }
+                trafficMatrix[node][insert] += data[node][d];
+                data[insert].push_back(data[node][d]);
+            }
+        }
+    }
 }
 
 void Topology::PrintLayout(){
@@ -180,4 +236,5 @@ void Topology::setConnections(vector<int> c, bool verbose){
 
     this->connections = connections;
     if(verbose) printConnections();
+    DistributeTraffic();
 }
