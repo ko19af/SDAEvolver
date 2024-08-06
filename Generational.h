@@ -12,7 +12,7 @@ using namespace std;
 
 class Generational {
     public:
-        explicit Generational();
+        explicit Generational(int numStates, int numChars, int popSize, int tournSelector, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate);
         double genCalcFitness(SDA &member);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
 
     private:
@@ -35,9 +35,10 @@ class Generational {
         double genMutationRate = 0.1;
         int numGenerations = 100;
         int genNumMutations = 1;
-        int numConnections = 40; // defines the number of connnections the network will possess
+        int genMutOperator = 1;
+        int genCrossOp = 1;
+        double genCrossRate = 0.5;
         Topology T;
-
 };
 
 #endif // Topology_H

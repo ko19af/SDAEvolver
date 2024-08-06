@@ -24,12 +24,14 @@ int Generational::genMatingEvent(SDA *currentPop, SDA *newPop) {
         child2.copy(parent2);
 
         // Crossover
-        child1.crossover(child2);
+        if(genCrossOp == 1 && drand48() < genCrossRate) child1.crossover(child2);
 
         // Mutation
         if (drand48() < genMutationRate) {
-            child1.mutate(genNumMutations);
-            child2.mutate(genNumMutations);
+            if(genMutOperator == 1){
+                child1.mutate(genNumMutations);
+                child2.mutate(genNumMutations);
+            }
         }
 
         // Add to new population
@@ -214,8 +216,20 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
     return 0;
 }
 
-Generational::Generational() {
+Generational::Generational(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate) {
+    this->genSDANumChars = numChars;
+    this->genPopSize = popSize;
+    this->genTournSize = tournSize;
+    this->genCrossOp = crossOp;
+    this->genCrossRate = crossRate;
+    this->genMutOperator = mutOperator;
+    this->genMutationRate = mutRate;
+
     Topology T(5,5,1,1,3);
     this->T = T;
-    // genEvolver();
+
+    int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
+    genSDAResponseLength = outputLen;
+
+    genEvolver(numStates, outputLen, numGen);
 }

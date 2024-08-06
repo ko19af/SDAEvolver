@@ -20,11 +20,32 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes){
 
     srand(time(0));
 
-    EdgeTraffic(starts);
+    EdgeTraffic(starts, 100);
     ChooseStart(x, starts);
     ChooseEnd(y, x, ends);
     ChooseNodeLocations(x, y, numNodes);
     PrintLayout();
+}
+
+/**
+ * This method calculates the amount of energy required to recive and transmit the various data streams it is 
+ * receving from/to other nodes
+ * 
+ * Transmit-Energy-Consumed = Transmit-Current * Voltage * Time-for-which-node-transmits-packets
+ * Receive-Energy-Consumed = Receive-Current * Voltage * Time -for-which-node-receives-packets
+ */
+
+void Topology::EnergyConsumption(double transmissionRate, double recevingRate){
+    vector<double> energyConsumption(tNumNodes-numENodes, 0.0);
+
+    for (int x = numENodes; x < tNumNodes; x++){// for each node
+        double incomingData = 0.0;// calculate the total amount of data being transmitted from the node
+        for (int d = 0; d < tNumNodes; d++){// get (d)ata values from the traffic matrix
+            incomingData += trafficMatrix[x][d];
+        }
+        energyConsumption[x] = incomingData * transmissionRate;// multiply the number of MBps being transmitted by the energy consumption cost (0.03 W)
+    }
+    this->energyConsumption = energyConsumption;
 }
 
 /**
@@ -38,7 +59,7 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes){
  */
 
 void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
-    vector<vector<double>> data(numStarts);
+    vector<vector<double>> data(tNumNodes-numCNodes);
 
     for (int x = 0; x < numStarts; x++){
         double output = 0;
@@ -48,8 +69,7 @@ void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
             data[x].push_back(d);
             output += d;
         }
-
-        trafficMatrix[0][x] = output;
+        trafficMatrix[x][x] = output;
     }
     this->data = data;
 }
@@ -58,16 +78,19 @@ void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
  * This method pushes the data through the network based on the connections established from the SDA.
  * Data is pushed through a connection based on the cumulative amount of data being pushed to a node,
  * meaning the node receving the least amount of data will receive the data stream.
+ * 
+ * 
+ * NEED TO INCLUIDE A METHOD THAT DEALS WITH BOTTLE NECKS (QueueNodes method)!!!!!!!!!!!!!
  */
 
-void::Topology::DistributeTraffic(){
+void Topology::DistributeTraffic(){
     for (int node = 0; node < tNumNodes - numCNodes; node++){// for each node (starting from edge node & excluding cloud nodes)
         if (data[node].size() > 0){// that has data to distribute
             for (int d = 0; d < data[node].size(); d++){// go through data being sent out
                 int insert = 0;// node receiving the data
                 double best = DBL_MAX;// lowest impact on the node receving the data
                 for (int c = numENodes; c < connections[0].size(); c++){// find node that increases the least with new data
-                    if (connections[node][c] == 1 && trafficMatrix[node][c] + data[node][d] < best){// (Check to change it based on total amount a node is receving rather than a single connection)
+                    if (c != node && connections[node][c] == 1 && trafficMatrix[c][node] == 0 && trafficMatrix[node][c] + data[node][d] < best){// (Check to change it based on total amount a node is receving rather than a single connection)
                         insert = c;
                         best = trafficMatrix[node][c] + data[node][d];
                     }
@@ -77,6 +100,47 @@ void::Topology::DistributeTraffic(){
             }
         }
     }
+}
+
+/**
+ * This method places the nodes in a queue to determine the order in which order the nodes will have their
+ * data distributed, this is done in order to avoid issues with bottlenecks.
+ * 
+ *  TEST THIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
+
+void Topology::LayerNodes(){
+    vector<int> layer(tNumNodes - numCNodes, -1);// vector to hold the queue order of the nodes
+    vector<int> checking;
+    vector<int> toCheck;
+
+    for (int x = (numENodes + numNodes); x < tNumNodes; x++){
+        checking.push_back(x); // add the cloud nodes to the toCheck vector as the starting point
+        layer[x] = tNumNodes;
+    }
+
+    int level = tNumNodes-1;// initialize layer level as one below the cloud layer
+
+    while(checking.size() != 0){// go through the vector until it has been emptied
+        int check = checking[0];// get first node from toCheck vector and set it as element being checked
+        checking.erase(toCheck.begin()); // remove node from toCheck vector
+
+        if (check < numENodes + numCNodes && layer[check == -1]){// if node is not a cloud node and has not already been assigned to a layer
+            layer[check] = level;// define the layer of the node
+        }
+
+        for (int x = numENodes; x < tNumNodes; x++){// add the nodes connected to this node (not already queued) to the group being checked
+            if(check != x && connections[check][x] == 1 && layer[x] == -1) toCheck.push_back(x);// if node connected to check is not already queued
+        }
+
+        if(checking.size() == 0 && toCheck.size() != 0){//if the current layer is completed and their are mode nodes to layer
+            for (int x = 0; x < toCheck.size(); x++) checking.push_back(toCheck[x]);// move toCheck elements to checking
+            toCheck.clear();// clear the elements from the toCheck matrix
+            level--;// move to next level (as old level is finished)
+        }
+    }
+
+    this->layer = layer;// store queue as global variable
 }
 
 void Topology::PrintLayout(){
@@ -104,6 +168,16 @@ void Topology::printConnections(){
     cout << "Connections" << endl;
 }
 
+void Topology::printTraffic(){
+    for (int y = 0; y < trafficMatrix.size(); y++){
+        for (int x = 0; x < trafficMatrix[0].size(); x++){
+            cout << trafficMatrix[y][x] << ' ';
+        }
+        cout << '\n';
+    }
+    cout << "Traffic" << endl;
+}
+
 /**
  * This will randomly select the start location(s) the information is originating from in the network
  * from the first row in the 2-d array representing the topology
@@ -113,7 +187,6 @@ void Topology::printConnections(){
 */
 
 int Topology::ChooseStart(int x, int numStarts){
-    
     for (int i = 0; i < numStarts; i++){
         int start;
         do{
@@ -235,6 +308,9 @@ void Topology::setConnections(vector<int> c, bool verbose){
     // }
 
     this->connections = connections;
-    if(verbose) printConnections();
     DistributeTraffic();
+    if(verbose){
+        printConnections();
+        printTraffic();
+    }
 }

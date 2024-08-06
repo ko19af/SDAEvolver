@@ -1,7 +1,9 @@
 #include <iostream>
+#include <cstdlib>
 #include "SDA.h"
 #include "Topology.h"
 #include "Generational.h"
+#include "Steady.cpp"
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -9,7 +11,7 @@ using namespace std;
 void testing(){
 
     Topology T(5,5,1,1,3);
-    Generational G;
+    //Generational G;
 
     int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
     int numStates = 3;
@@ -21,7 +23,7 @@ void testing(){
     //cout << c.size() << endl;
     //T.setConnections(c, true); // set the connections in the topology
 
-    G.genCalcFitness(member);
+    //G.genCalcFitness(member);
 
     exit(1);
 
@@ -60,7 +62,23 @@ void testing(){
 
 }
 
-int main() {
-    testing();
+int main(int argc, char* argv[]) {
+
+    //collect hyper-parameters for the run
+    // int numStates = atoi(argv[1]);
+    // int numChars = atoi(argv[2]);
+    // int popSize = atoi(argv[3]);
+    // int tournSize = atoi(argv[4]);
+    //int gaOperator = atoi(argv[5]);
+    // int numGen = atoi(argv[6]);
+    // int crossOp = atoi(argv[7]);
+    // double crossRate = atoi(argv[8]) / 100;
+    // int mutOperator = atoi(argv[9]);
+    // double mutRate = atoi(argv[10]) / 100;
+    // int runs = atoi(argv[11]);
+
+    //if(gaOperator == 0) Generational G(numStates, numChars, popSize, tournSize, numGen, crossOp, crossRate, mutOperator, mutRate);
+    //else if(gaOperator == 1) Steady;
+    //else testing();
     return 0;
 }

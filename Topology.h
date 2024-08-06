@@ -20,6 +20,8 @@ public:
 
     vector<vector<bool>> network;
     vector<vector<int>> connections;
+    vector<int> layer;
+    vector<double> energyConsumption;
     vector<vector<double>> data;
     vector<vector<double>> trafficMatrix;// two dimensional vector tracking the incoming and ougoing traffic from a node in the network
     int numNodes; // variable representing number of transmission nodes present in the network
@@ -30,13 +32,15 @@ public:
 private:
     void PrintLayout();
     void printConnections();
+    void printTraffic();
     void ChooseNodeLocations(int x, int y, int numNodes);
     void findNode(int &x, int &y, int node);
     void EdgeTraffic(int numStarts, int maxOut = 10000, int upper = 20, int lower = 5);
     void DistributeTraffic();
+    void LayerNodes();
     int ChooseStart(int x, int numStarts);
     int ChooseEnd(int y, int x, int numEnds);
-    
+    void EnergyConsumption(double transmissionRate = 0.03, double recevingRate = 0.03);
 };
 
 #endif // Topology_H
