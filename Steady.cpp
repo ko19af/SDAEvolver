@@ -1,24 +1,4 @@
-#include <iostream>
-#include "SDA.h"
-#include <bits/stdc++.h>
-
-using namespace std;
-
-double calcFitness(SDA &member);
-int printPopFits(ostream &outStrm, vector<double> &popFits);
-bool compareFitness(int popIdx1, int popIdx2);
-vector<int> tournSelect(int size, bool decreasing);
-int matingEvent(SDA* population);
-
-int SDANumChars = 2;
-int SDAResponseLength = 2;
-int popSize;
-int tournSize = 7;
-bool lowerBetter = false;
-double mutationRate = 0.1;
-int numMutations = 1;
-
-vector <double> popFits;
+#include "Steady.h"
 
 /**
  * Performs a single mating event in the population by performing tournament selection,
@@ -29,9 +9,9 @@ vector <double> popFits;
  * @param population the population undergoing evolution
  * @return
  */
-int matingEvent(SDA* population){
+int Steady::MatingEvent(SDA* population){
     // Tournament Selection
-    vector<int> tournIdxs = tournSelect(tournSize, lowerBetter);
+    vector<int> tournIdxs = TournSelect(tournSize, lowerBetter);
     SDA parent1, parent2, child1, child2;
     parent1 = population[tournIdxs[0]];
     parent2 = population[tournIdxs[1]];
@@ -39,19 +19,21 @@ int matingEvent(SDA* population){
     child2.copy(parent2);
 
     // Crossover
-    child1.crossover(child2);
+    if(crossOp == 1 && drand48() < crossRate)child1.crossover(child2);
 
     // Mutation
-    child1.mutate(numMutations);
-    child1.mutate(numMutations);
+    if (drand48() < mutationRate) {
+        child1.mutate(numMutations);
+        child1.mutate(numMutations);
+    }
 
     // Update population with genrated children
     population[tournIdxs[tournSize - 1]] = child1;
     population[tournIdxs[tournSize - 2]] = child2;
 
     // Update fitness of worst two members of the tournament
-    popFits[tournIdxs[tournSize-1]] = calcFitness(child1);
-    popFits[tournIdxs[tournSize-2]] = calcFitness(child2);
+    popFits[tournIdxs[tournSize-1]] = CalcFitness(child1);
+    popFits[tournIdxs[tournSize-2]] = CalcFitness(child2);
 
     return 0;
 }
@@ -67,7 +49,7 @@ int matingEvent(SDA* population){
  * @param decreasing is a boolean determining the ordering of the indicies in the returned vector based on their fitness
  * @return a vector of indices for members of the population sorted based on fitness
  */
-vector<int> tournSelect(int size, bool decreasing) {
+vector<int> Steady::TournSelect(int size, bool decreasing) {
     vector<int> tournIdxs;
     int idxToAdd;
 
@@ -87,8 +69,9 @@ vector<int> tournSelect(int size, bool decreasing) {
             }
         } while (tournIdxs.size() < size);
     }
-
-    sort(tournIdxs.begin(), tournIdxs.end(), compareFitness);
+    
+    //sort(tournIdxs.begin(), tournIdxs.end(), CompareFitness);
+    sort(tournIdxs.begin(), tournIdxs.end());
     if (decreasing) {
         reverse(tournIdxs.begin(), tournIdxs.end());
     }
@@ -103,7 +86,7 @@ vector<int> tournSelect(int size, bool decreasing) {
  * @param popIdx2 a second index representing a member of the population whos fitness is being compared to the previous member
  * @return a boolean determing which member had the greatest fitness
  */
-bool compareFitness(int popIdx1, int popIdx2) {
+bool Steady::CompareFitness(int popIdx1, int popIdx2) {
     if (popFits[popIdx1] < popFits[popIdx2]) {
         return true;
     }
@@ -114,12 +97,39 @@ bool compareFitness(int popIdx1, int popIdx2) {
     return false;
 }
 
-double calcFitness(SDA &member){
-    // KEVINDO: (Later) complete fitness functions.
-    return drand48();
+double Steady::CalcFitness(SDA &member){
+
+    int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
+    vector<int> c(outputLen);// vector for holding response from SDA
+    member.fillOutput(c, false, cout);// fill vector using SDA
+    T.setConnections(c, true);//set the connections in the topology
+
+    // Fitness function sums all distances an edge node uses to reach a cloud node through topology
+    int val = 0;
+    for (int x = 0; x < T.numENodes; x++){// for each edge node
+        vector<double> sPath;// create vector to record distance from edge node to all other nodes
+        sPath.reserve(T.tNumNodes);
+        sPath.assign(T.tNumNodes, DBL_MAX); // set all values to max double value
+        sPath[x] = 0;// set distance to starting edge node to zero
+        T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
+
+        for (int s:sPath) cout << to_string(s) + '\t';//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        cout << endl;
+
+        int count = 0;// number of cloud nodes edge node connects to
+        int dist = 0;// total distance from edge node to cloud node
+        for (int i = 0; i < T.numCNodes; i++){
+            if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
+                dist += sPath[T.tNumNodes - 1 - i];// add distance
+                count++;// increment connection count
+            }
+          }
+        if(count != 0) val += dist / count;// add average connection distance to total distance value
+    }
+    return val/T.numENodes;// return the average distance from all edge nodes to a cloud node
 }
 
-int printPopFits(ostream &outStrm, vector<double> &popFits) {
+int Steady::PrintPopFits(ostream &outStrm, vector<double> &popFits) {
     outStrm << "Fitness Values: ";
     bool first = true;
     for (double fit: popFits) {
@@ -145,7 +155,7 @@ int printPopFits(ostream &outStrm, vector<double> &popFits) {
  * @return 
 */
 
-int printReport(ostream &outStrm, vector<double> &popFits, SDA* population){
+int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population){
     double avgFit = 0;// Holds the average fitness
     int bestIdx = 0;// Stores the best member of populations location
 
@@ -164,7 +174,7 @@ int printReport(ostream &outStrm, vector<double> &popFits, SDA* population){
     return 0;
 }
 
-int steEvolver(int SDANumStates, int SDAOutputLen, int numMatingEvents){
+int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents){
     SDA* population;
     population = new SDA[popSize];
     popFits.reserve(popSize);
@@ -172,24 +182,34 @@ int steEvolver(int SDANumStates, int SDAOutputLen, int numMatingEvents){
     // Step 1: initialize the population
     for (int i = 0; i < popSize; ++i) {
         population[i] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAOutputLen);
-        popFits[i] = calcFitness(population[i]);
+        popFits[i] = CalcFitness(population[i]);
     }
 
-    printPopFits(cout, popFits);
+    PrintPopFits(cout, popFits);
 
     // Step 2: Evolution
     for (int gen = 0; gen < numMatingEvents; ++gen) {
-        matingEvent(population);
+        MatingEvent(population);
     }
 
     // Step 3: Reporting
-    printReport(cout, popFits, population);
+    PrintReport(cout, popFits, population);
 
     delete[] population;
     return 0;
 }
 
-int Steady() {
-    steEvolver(100, 10, 20);
-    return 0;
+Steady::Steady(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate){
+    Topology steadyT(5,5,1,1,3);
+    this->T = T;
+    this->SDANumChars = numChars;
+    this->popSize = popSize;
+    this->crossOp = crossOp;
+    this->crossRate = crossRate;
+    this->mutOperator = mutOperator;
+    this->mutationRate = mutRate;
+    this->tournSize = tournSize;
+
+    int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
+    Evolver(numStates, outputLen, numGen);
 }

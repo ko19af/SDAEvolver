@@ -9,7 +9,7 @@
  * @param newPop the next generation's population
  * @return
  */
-int Generational::genMatingEvent(SDA *currentPop, SDA *newPop) {
+int Generational::genMatingEvent(SDA *currentPop, SDA *newPop, Topology T) {
     // Tournament Selection
     vector<int> tournIdxs = genTournSelect(genTournSize, genLowerBetter);
     SDA parent1, parent2, child1, child2;
@@ -27,11 +27,9 @@ int Generational::genMatingEvent(SDA *currentPop, SDA *newPop) {
         if(genCrossOp == 1 && drand48() < genCrossRate) child1.crossover(child2);
 
         // Mutation
-        if (drand48() < genMutationRate) {
-            if(genMutOperator == 1){
+        if (drand48() < genMutationRate && genMutOperator == 1) {
                 child1.mutate(genNumMutations);
                 child2.mutate(genNumMutations);
-            }
         }
 
         // Add to new population
@@ -39,8 +37,8 @@ int Generational::genMatingEvent(SDA *currentPop, SDA *newPop) {
         newPop[event + 1] = child2;
 
         // Calculate fitness
-        genPopFits[event] = genCalcFitness(child1);
-        genPopFits[event + 1] = genCalcFitness(child2);
+        genPopFits[event] = genCalcFitness(child1, T);
+        genPopFits[event + 1] = genCalcFitness(child2, T);
     }
     return 0;
 }
@@ -121,7 +119,7 @@ bool Generational::genCompareFitness(int popIdx1, int popIdx2) {
     return false;
 }
 
-double Generational::genCalcFitness(SDA &member){
+double Generational::genCalcFitness(SDA &member, Topology T){
 
     int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
     vector<int> c(outputLen);// vector for holding response from SDA
@@ -173,18 +171,17 @@ int Generational::genPrintPopFits(ostream &outStrm, vector<double> &popFits) {
     return 0;
 }
 
-int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerations) {
+int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerations, Topology T) {
     SDA *currentPop, *newPop;
     currentPop = new SDA[genPopSize];
     newPop = new SDA[genPopSize];
     genPopFits.reserve(genPopSize);
-    Topology T;// initialize the topology of the network
 
     // Step 1: initialize the population
     for (int i = 0; i < genPopSize; ++i) {
         currentPop[i] = SDA(SDANumStates, genSDANumChars, genSDAResponseLength, SDAOutputLen);
         newPop[i] = SDA(SDANumStates, genSDANumChars, genSDAResponseLength, SDAOutputLen);
-        genPopFits.push_back(genCalcFitness(currentPop[i]));
+        genPopFits.push_back(genCalcFitness(currentPop[i], T));
     }
 
     genPrintPopFits(cout, genPopFits);
@@ -204,7 +201,7 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
         }
 
         // Generate the new population
-        genMatingEvent(currentPop, newPop);
+        genMatingEvent(currentPop, newPop, T);
 
         // Replace current population with new population
         for (int mem = 0; mem < genPopSize; mem++){
@@ -225,11 +222,17 @@ Generational::Generational(int numStates, int numChars, int popSize, int tournSi
     this->genMutOperator = mutOperator;
     this->genMutationRate = mutRate;
 
-    Topology T(5,5,1,1,3);
-    this->T = T;
+    // define parameters for Topology
+    this->numColoumns = 5;
+    this->numRows = 5;
+    this->numStarts = 1;
+    this->numEnds = 1;
+    this->numNodes = 3;
+
+    Topology T = Topology(numColoumns, numRows, numStarts, numEnds, numNodes);
 
     int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
     genSDAResponseLength = outputLen;
 
-    genEvolver(numStates, outputLen, numGen);
+    genEvolver(numStates, outputLen, numGen, T);
 }

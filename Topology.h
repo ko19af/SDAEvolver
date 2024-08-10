@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <algorithm> 
 #include <cmath>
 #include <bits/stdc++.h>
 
@@ -24,10 +25,13 @@ public:
     vector<double> energyConsumption;
     vector<vector<double>> data;
     vector<vector<double>> trafficMatrix;// two dimensional vector tracking the incoming and ougoing traffic from a node in the network
+    vector<double> failed;// records data that failed to reach a cloud node
     int numNodes; // variable representing number of transmission nodes present in the network
     int numCNodes;// varialbe representing total number of cloud nodes in the topology
     int numENodes;// number of edge/fog nodes present in the network
     int tNumNodes; // variable representing total number of nodes in the network
+    int dataStreams;
+    bool print1 = true;
 
 private:
     void PrintLayout();

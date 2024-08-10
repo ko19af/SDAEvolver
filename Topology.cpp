@@ -18,8 +18,6 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes){
     vector<vector<double>> trafficMatrix(tNumNodes, vector<double>(tNumNodes, 0.0));
     this->trafficMatrix = trafficMatrix;
 
-    srand(time(0));
-
     EdgeTraffic(starts, 100);
     ChooseStart(x, starts);
     ChooseEnd(y, x, ends);
@@ -59,91 +57,125 @@ void Topology::EnergyConsumption(double transmissionRate, double recevingRate){
  */
 
 void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
-    vector<vector<double>> data(tNumNodes-numCNodes);
+    
+    vector<vector<double>> data(tNumNodes);
+    int dataStreams = 0;// variable to count the number of data streams
 
-    for (int x = 0; x < numStarts; x++){
-        double output = 0;
-        while(output < maxOut){
-            double d = (rand()/(double)RAND_MAX)*(upper-lower)+lower;
-            if(output + d > maxOut) break;
-            data[x].push_back(d);
-            output += d;
+    for (int x = 0; x < numStarts; x++){//for each starting node
+        double output = 0;// record how much data is being ouputed at the node
+        while(output < maxOut){// while the ouput from the node is less than the max ouput
+            double d = (rand()/(double)RAND_MAX)*(upper-lower)+lower;// randomly generate a value in the packet size range
+            if(output + d > maxOut) break;// if ouput plus that value is greater than max output break out of loop
+            data[x].push_back(d);// if max is not violated add that data to the list of streams eminating from the node
+            output += d;// apped the data to the ouput value
+            dataStreams++;// increment the number of datastreams that exist
         }
-        trafficMatrix[x][x] = output;
+        trafficMatrix[x][x] = output;// the ouput value in the traffic matrix for the start node
     }
-    this->data = data;
+    this->data = data;// set local data vector as global data vector
+    this->dataStreams = dataStreams;// set local datastream variable as global data stream variable
 }
 
 /**
- * This method pushes the data through the network based on the connections established from the SDA.
- * Data is pushed through a connection based on the cumulative amount of data being pushed to a node,
- * meaning the node receving the least amount of data will receive the data stream.
+ * This method pushes the data through the network based on the connections, established from the SDA,
+ * and the layering method. Data is pushed through a connection based on the cumulative amount of data 
+ * being pushed to a node,meaning the node receving the least amount of data will receive the data stream
+ * (i.e. a greedy approach to data distribution).
  * 
- * 
- * NEED TO INCLUIDE A METHOD THAT DEALS WITH BOTTLE NECKS (QueueNodes method)!!!!!!!!!!!!!
- */
+*/
 
 void Topology::DistributeTraffic(){
-    for (int node = 0; node < tNumNodes - numCNodes; node++){// for each node (starting from edge node & excluding cloud nodes)
-        if (data[node].size() > 0){// that has data to distribute
-            for (int d = 0; d < data[node].size(); d++){// go through data being sent out
-                int insert = 0;// node receiving the data
-                double best = DBL_MAX;// lowest impact on the node receving the data
-                for (int c = numENodes; c < connections[0].size(); c++){// find node that increases the least with new data
-                    if (c != node && connections[node][c] == 1 && trafficMatrix[c][node] == 0 && trafficMatrix[node][c] + data[node][d] < best){// (Check to change it based on total amount a node is receving rather than a single connection)
-                        insert = c;
-                        best = trafficMatrix[node][c] + data[node][d];
+
+    for (int x = numENodes; x < tNumNodes; x++) data[x].clear(); // clear distribution from previous runs (except at edge nodes)
+
+    vector<int> toDo;// vector containing the nodes that have data to distribute
+    vector<vector<double>> toDistribute(tNumNodes);// vector containing data to distribute at each node
+    vector<double> failed(dataStreams);// create vector to record datastreams that failed to reach target destination
+
+    for(int x = 0; x < numENodes; x++){// for all the edge nodes
+        toDo.push_back(x);// initialize vector with the edge nodes
+        for(double d : data[x]) toDistribute[x].push_back(d);// place data needing distribution in the toDistribute vector
+    }
+
+    while(toDo.size() != 0){// while there are nodes with data to distribute
+        int node = toDo[0];// get node node id from toDo
+        toDo.erase(toDo.begin());// remove node id from toDo
+
+        while(toDistribute[node].size() != 0){// while their is data to distribute from the node
+            double d = toDistribute[node][0];// get the data being distributed
+            toDistribute[node].erase(toDistribute[node].begin());// remove data from distribution list
+
+            int insert = node;// node receinving the data
+            double best = DBL_MAX;// lowest impact
+            for (int x = numENodes; x < tNumNodes; x++){// go through all the connections to the node
+                if (node != x && connections[node][x] == 1 && trafficMatrix[node][x] + d < best){
+                    if(layer[insert] < layer[x]){// prioritse sending data to higher layer nodes
+                        insert = x;// sent insert to node that satisfys above parameters
+                        best = trafficMatrix[node][x] + d;// set best as current data plus new data
+                    }else if(layer[insert] == layer[x]){
+                        insert = x;// sent insert to node that satisfys above parameters
+                        best = trafficMatrix[node][x] + d;// set best as current data plus new data
                     }
                 }
-                trafficMatrix[node][insert] += data[node][d];
-                data[insert].push_back(data[node][d]);
+            }
+
+            if(insert >= numENodes + numNodes){// if data is sent to a cloud node
+                trafficMatrix[node][insert] += d;// update traffic matrix with the new data transmitted between nodes
+                data[insert].push_back(d);// record packet stream being sent/recived to node
+            } else if (insert != node && insert < numENodes + numNodes){// data is sent to another node in network
+                trafficMatrix[node][insert] += d;
+                data[insert].push_back(d);
+                toDistribute[insert].push_back(d);// add data to be distributed from node
+                if(count(toDo.begin(), toDo.end(), insert) < 1) toDo.push_back(insert);// add node to list of nodes that must distribute data (if not already added)
+            }else{// if data has no place to go & did not reach a cloud node
+                failed.push_back(d);
             }
         }
     }
+    this->failed = failed;// set local failed to global failed
 }
 
 /**
  * This method places the nodes in a queue to determine the order in which order the nodes will have their
  * data distributed, this is done in order to avoid issues with bottlenecks.
- * 
- *  TEST THIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
 void Topology::LayerNodes(){
-    vector<int> layer(tNumNodes - numCNodes, -1);// vector to hold the queue order of the nodes
+    vector<int> layer(tNumNodes, -1);// vector to hold the queue order of the nodes
     vector<int> checking;
     vector<int> toCheck;
 
-    for (int x = (numENodes + numNodes); x < tNumNodes; x++){
-        checking.push_back(x); // add the cloud nodes to the toCheck vector as the starting point
-        layer[x] = tNumNodes;
-    }
+    for (int x = (numENodes + numNodes); x < tNumNodes; x++) checking.push_back(x);// add cloud nodes to checking as start point
+    
+    int level = tNumNodes;// initialize layer level
 
-    int level = tNumNodes-1;// initialize layer level as one below the cloud layer
+    while(checking.size() != 0){// go through checking vector until none left to check
+        int check = checking[0];// get first node from checking and set it as element being checked
+        checking.erase(checking.begin()); // remove node from checking
 
-    while(checking.size() != 0){// go through the vector until it has been emptied
-        int check = checking[0];// get first node from toCheck vector and set it as element being checked
-        checking.erase(toCheck.begin()); // remove node from toCheck vector
-
-        if (check < numENodes + numCNodes && layer[check == -1]){// if node is not a cloud node and has not already been assigned to a layer
-            layer[check] = level;// define the layer of the node
+        if (layer[check] == -1){// if node has not been assigned to a layer
+            layer[check] = level;// set the layer of the node 
+            for (int x = 0; x < tNumNodes; x++){// add the nodes connected to this node to the group being checked later
+                if(connections[check][x] == 1 && layer[x] == -1) toCheck.push_back(x);// if node is connected to check add to toCheck
+            }
         }
 
-        for (int x = numENodes; x < tNumNodes; x++){// add the nodes connected to this node (not already queued) to the group being checked
-            if(check != x && connections[check][x] == 1 && layer[x] == -1) toCheck.push_back(x);// if node connected to check is not already queued
-        }
-
-        if(checking.size() == 0 && toCheck.size() != 0){//if the current layer is completed and their are mode nodes to layer
+        if(checking.size() == 0 && toCheck.size() != 0){//if current layer is completed and mode nodes need to be layered
             for (int x = 0; x < toCheck.size(); x++) checking.push_back(toCheck[x]);// move toCheck elements to checking
             toCheck.clear();// clear the elements from the toCheck matrix
             level--;// move to next level (as old level is finished)
         }
     }
 
-    this->layer = layer;// store queue as global variable
+    this->layer = layer;// store layering
 }
 
+/** This method prints the resulting layout of the nodes in the network topology
+ * 
+ */
+
 void Topology::PrintLayout(){
+    cout << "Topology:" << endl;
     int nodeID = 1;
     for (int y = 0; y < network.size(); y++)
     {
@@ -155,27 +187,34 @@ void Topology::PrintLayout(){
         }
         cout << '\n';
     }
-    cout << "Topology" << endl;
 }
 
+/** This mehtod prints the connections present in the network topology
+ * 
+ */
+
 void Topology::printConnections(){
+    cout << "Connections:" << endl;
     for (int y = 0; y < connections.size(); y++){
         for (int x = 0; x < connections[0].size(); x++){
             cout << connections[y][x] << ' ';
         }
         cout << '\n';
-    }
-    cout << "Connections" << endl;
+    }   
 }
 
+/** This method prints the traffic flowing through the nodes in the network
+ * 
+ */
+
 void Topology::printTraffic(){
+        cout << "Traffic: " << endl;
     for (int y = 0; y < trafficMatrix.size(); y++){
         for (int x = 0; x < trafficMatrix[0].size(); x++){
             cout << trafficMatrix[y][x] << ' ';
         }
         cout << '\n';
     }
-    cout << "Traffic" << endl;
 }
 
 /**
@@ -290,27 +329,23 @@ void Topology::findNode(int &x, int &y, int node){
 */
 
 void Topology::setConnections(vector<int> c, bool verbose){
+    vector<vector<int>> connections(tNumNodes, vector<int>(tNumNodes, 0));
+    int pos = 0;// keep track of position in SDA connection vector
     
-    vector<vector<int>> connections({{0,1,0,1,0},
-                                     {1,0,1,0,0},
-                                     {0,1,0,0,1},
-                                     {1,0,0,0,1},
-                                     {0,0,1,1,0}});
-
-    // vector<vector<int>> connections(tNumNodes, vector<int>(tNumNodes, 0));
-    // int pos = 0;// keep track of position in SDA connection vector
-    // for (int y = 0; y < connections.size(); y++){// fill the connection matrix
-    //     for (int x = 0; x < connections[0].size(); x++){
-    //         connections[y][x] = c[pos];
-    //         connections[x][y] = c[pos];
-    //         pos++;// increment position in SDA connection vector
-    //     }
-    // }
+    for (int y = 0; y < connections.size(); y++){// fill the connection matrix
+        for (int x = 0; x < y; x++){
+            connections[y][x] = c[pos];
+            connections[x][y] = c[pos];
+            pos++;// increment position in SDA connection vector
+        }
+    }
 
     this->connections = connections;
+    LayerNodes();
     DistributeTraffic();
-    if(verbose){
+    if(verbose && print1){
         printConnections();
         printTraffic();
+        this->print1 = false;
     }
 }

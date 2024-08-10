@@ -11,18 +11,20 @@
 using namespace std;
 
 class Generational {
+
     public:
         explicit Generational(int numStates, int numChars, int popSize, int tournSelector, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate);
-        double genCalcFitness(SDA &member);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
+        double genCalcFitness(SDA &member, Topology T);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
+        
 
     private:
         
         int genPrintPopFits(ostream &outStrm, vector<double> &popFits);
         bool genCompareFitness(int popIdx1, int popIdx2);
         vector<int> genTournSelect(int size, bool decreasing);
-        int genMatingEvent(SDA *currentPop, SDA *newPop);
+        int genMatingEvent(SDA *currentPop, SDA *newPop, Topology T);
         vector<double> genPopFits;
-        int genEvolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20);
+        int genEvolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20, Topology T);
 
         int genSDANumChars = 2;
         int genSDAResponseLength = 2;
@@ -38,7 +40,11 @@ class Generational {
         int genMutOperator = 1;
         int genCrossOp = 1;
         double genCrossRate = 0.5;
-        Topology T;
+        int numColoumns = 5;
+        int numRows = 5;
+        int numStarts = 1;
+        int numEnds = 1;
+        int numNodes = 3;
 };
 
 #endif // Topology_H
