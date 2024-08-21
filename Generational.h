@@ -20,12 +20,15 @@ class Generational {
     private:
         
         int genPrintPopFits(ostream &outStrm, vector<double> &popFits);
+        int genMatingEvent(SDA *currentPop, SDA *newPop, Topology T);
+        int genEvolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20, Topology T = Topology(5,5,1,1,3));
+        double dataFitness(Topology T);
+        double distanceFitness(Topology T);
+        double energyFitness(Topology T);
         bool genCompareFitness(int popIdx1, int popIdx2);
         vector<int> genTournSelect(int size, bool decreasing);
-        int genMatingEvent(SDA *currentPop, SDA *newPop, Topology T);
-        vector<double> genPopFits;
-        int genEvolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20, Topology T = Topology(5,5,1,1,3));
 
+        vector<double> genPopFits;
         int maxConnections = 100000;
         int genSDANumChars = 2;
         int genSDAResponseLength = 2;

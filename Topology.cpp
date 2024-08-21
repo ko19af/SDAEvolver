@@ -330,8 +330,9 @@ void Topology::findNode(int &x, int &y, int node){
 
 void Topology::setConnections(vector<int> c, bool verbose, bool analyzeData){
     vector<vector<int>> connections(tNumNodes, vector<int>(tNumNodes, 0));
-    int pos = 0;// keep track of position in SDA connection vector
-    
+    this->numConnections = 0;
+    int pos = 0; // keep track of position in SDA connection vector
+
     for (int y = 0; y < connections.size(); y++){// fill the connection matrix
         for (int x = 0; x < y; x++){
             connections[y][x] = c[pos];

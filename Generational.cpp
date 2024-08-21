@@ -176,21 +176,58 @@ bool Generational::genCompareFitness(int popIdx1, int popIdx2) {
     return false;
 }
 
+/**
+ * This method calculates the fitness of an SDA when its output is applied to the topology being examined
+ * 
+ * @param member is the SDA being evaluated
+ * @param Topology is the topology that is being used for the evaluation
+ * @return is the fitness values of the SDA when applied to the topology
+ */
+
 double Generational::genCalcFitness(SDA &member, Topology T){
 
     vector<int> c(genSDAResponseLength);// vector for holding response from SDA
     member.fillOutput(c, false, cout);// fill vector using SDA
     T.setConnections(c, false, false);//set the connections in the topology
 
+    return distanceFitness(T);
+}
+
+/**
+ * This method calculates the average amount of data flowing through each node in the network
+ * 
+ * @param T is the topology being used in the evaluation of the fitness
+ * @return is the average amount of data being passed through the nodes in the network
+ */
+
+double Generational::dataFitness(Topology T){
+    double val = 0.0;// is the fitness of the data being passed through the nodes in the topology
+
+    for (int y = T.numENodes; y < T.tNumNodes; y++){// for each node that is not an edge node
+        double d = 0.0;// varialbe to record the amount of data a node is receiving
+        for (int x = 0; x < T.tNumNodes; x++) d += T.trafficMatrix[y][x];// add up all the data the node is receving
+        val += d / T.data[y].size();// average out the amount of data based on the amount of packet streams it is receving
+    }
+    return val / (T.tNumNodes-T.numENodes);// return the averaged value for all the nodes in the network
+}
+
+/**
+ * This method calculates the fitness of the connection distance in the topology
+ * 
+ * @param T is the topology being evaluates
+ * @return is the average distance all edge nodes are from a cloud node
+ */
+
+double Generational::distanceFitness(Topology T){
     // Fitness function sums all distances an edge node uses to reach a cloud node through topology
-    int val = 0;
+    double val = 0;
     for (int x = 0; x < T.numENodes; x++){// for each edge node
         vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
         sPath[x] = 0;// set distance to starting edge node to zero
         T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
 
         int count = 0;// number of cloud nodes edge node connects to
-        int dist = 0;// total distance from edge node to cloud node
+        double dist = 0;// total distance from edge node to cloud node
         for (int i = 0; i < T.numCNodes; i++){
             if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
                 dist += sPath[T.tNumNodes - 1 - i];// add distance
@@ -200,6 +237,18 @@ double Generational::genCalcFitness(SDA &member, Topology T){
         if(count != 0) val += dist / count;// add average connection distance to total distance value
     }
     return val/T.numENodes;// return the average distance from all edge nodes to a cloud node
+}
+
+/**
+ * This method calculates the fitness of the energy consumption in the topology
+ * 
+ * @param T is the topology being examined
+ * @return is the average energy consumption per node in the network
+ */
+
+double Generational::energyFitness(Topology T){
+
+    return 0.0;
 }
 
 int Generational::genPrintPopFits(ostream &outStrm, vector<double> &popFits) {
