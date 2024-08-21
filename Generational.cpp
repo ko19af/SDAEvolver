@@ -12,7 +12,7 @@
 int Generational::genMatingEvent(SDA *currentPop, SDA *newPop, Topology T) {
     // Tournament Selection
     vector<int> tournIdxs = genTournSelect(genTournSize, genLowerBetter);
-    SDA parent1, parent2, child1, child2;
+    SDA parent1, parent2, child1, child2, bc1, bc2;
 
     for (int event = elitism; event < genPopSize; event += 2) {
         do {
@@ -23,14 +23,71 @@ int Generational::genMatingEvent(SDA *currentPop, SDA *newPop, Topology T) {
         child1.copy(parent1);
         child2.copy(parent2);
 
-        // Crossover
+        // perform initial Crossover
         if(genCrossOp == 1 && drand48() < genCrossRate) child1.crossover(child2);
 
-        // Mutation
+        // perform initial Mutation
         if (drand48() < genMutationRate && genMutOperator == 1) {
                 child1.mutate(genNumMutations);
                 child2.mutate(genNumMutations);
         }
+
+        vector<int> v(genSDAResponseLength);// vector for holding response from SDA
+        child1.fillOutput(v, false, cout);// fill the vector with the ouput from the SDA
+        T.setConnections(v, false, false);// set the connections in the Topology based on the SDA output
+        bool retry = true;
+        bool change = false;
+
+        while(retry){
+            retry = false;
+            if(T.numConnections > maxConnections) retry = true;
+            else{
+                for (int y = 0; y < T.numENodes; y++){// go though all the edge nodes
+                    for (int x = T.numENodes + T.numNodes; x < T.tNumNodes; x++){// go through all edge connections to cloud nodes
+                        if(T.connections[y][x] == 1){// if there exists a connection between a edge and cloud node
+                            bc1.copy(parent1);// make copies of the parents seperarte from the children
+                            bc2.copy(parent2);
+                            if(genCrossOp == 1 && drand48() < genCrossRate) bc1.crossover(bc2);// reperform crossover and mutation
+                            if (drand48() < genMutationRate && genMutOperator == 1) bc1.mutate(genNumMutations);
+                            bc1.fillOutput(v, false, cout);// fill the ouput with the new SDA
+                            T.setConnections(v, false, false); // set the connections in the topology
+                            retry = true;
+                            change = true;
+                            break;
+                        }
+                    }
+                    if(retry) break;
+                }
+            }
+        } if(change) child1.copy(bc1);//if og child was seen as invalid in loop set child1 SDA to the valid SDA
+
+        child2.fillOutput(v, false, cout);// repeat above process for child2
+        T.setConnections(v, false, false);// set the connections in the Topology based on the SDA output
+        retry = true;
+        change = false;
+
+        while(retry){
+            retry = false;
+            if(T.numConnections > maxConnections) retry = true;
+            else{
+                for (int y = 0; y < T.numENodes; y++){
+                    for (int x = T.numENodes + T.numNodes; x < T.tNumNodes; x++){
+                        if(T.connections[y][x] == 1){
+                            bc1.copy(parent1);
+                            bc2.copy(parent2);
+                            if(genCrossOp == 1 && drand48() < genCrossRate) bc2.crossover(bc1);
+                            if (drand48() < genMutationRate && genMutOperator == 1) bc2.mutate(genNumMutations);
+                            bc2.fillOutput(v, false, cout);
+                            T.setConnections(v, false, false);
+                            retry = true;
+                            change = true;
+                            break;
+                        }
+                    }
+                    if(retry) break;
+                }
+            }
+        } if(change) child2.copy(bc2);//if og child2 is seen as invalid set child2 SDA to the valid SDA
 
         // Add to new population
         newPop[event] = child1;
@@ -121,22 +178,16 @@ bool Generational::genCompareFitness(int popIdx1, int popIdx2) {
 
 double Generational::genCalcFitness(SDA &member, Topology T){
 
-    int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
-    vector<int> c(outputLen);// vector for holding response from SDA
+    vector<int> c(genSDAResponseLength);// vector for holding response from SDA
     member.fillOutput(c, false, cout);// fill vector using SDA
-    T.setConnections(c, true);//set the connections in the topology
+    T.setConnections(c, false, false);//set the connections in the topology
 
     // Fitness function sums all distances an edge node uses to reach a cloud node through topology
     int val = 0;
     for (int x = 0; x < T.numENodes; x++){// for each edge node
-        vector<double> sPath;// create vector to record distance from edge node to all other nodes
-        sPath.reserve(T.tNumNodes);
-        sPath.assign(T.tNumNodes, DBL_MAX); // set all values to max double value
+        vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
         sPath[x] = 0;// set distance to starting edge node to zero
         T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
-
-        for (int s:sPath) cout << to_string(s) + '\t';//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        cout << endl;
 
         int count = 0;// number of cloud nodes edge node connects to
         int dist = 0;// total distance from edge node to cloud node
@@ -167,20 +218,64 @@ int Generational::genPrintPopFits(ostream &outStrm, vector<double> &popFits) {
         first = false;
     }
     outStrm << "\n";
-    outStrm << "Above 0.5: " << count << "\n";
+    //outStrm << "Above 0.5: " << count << "\n";
     return 0;
 }
 
 int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerations, Topology T) {
-    SDA *currentPop, *newPop;
+    SDA *currentPop, *newPop, np, cp;
     currentPop = new SDA[genPopSize];
     newPop = new SDA[genPopSize];
     genPopFits.reserve(genPopSize);
 
     // Step 1: initialize the population
     for (int i = 0; i < genPopSize; ++i) {
-        currentPop[i] = SDA(SDANumStates, genSDANumChars, genSDAResponseLength, SDAOutputLen);
-        newPop[i] = SDA(SDANumStates, genSDANumChars, genSDAResponseLength, SDAOutputLen);
+
+        vector<int> v(genSDAResponseLength);// vector for holding response from SDA
+        bool retry = true;
+
+        while(retry){
+            cp = SDA(SDANumStates, genSDANumChars, genSDAResponseLength, SDAOutputLen);// create a new SDA
+            cp.fillOutput(v, false, cout);// fill the vector with the new SDA's output
+            T.setConnections(v, false, false);// set the connections in the topology
+            retry = false;// set retry bool to false so loop is exited if the SDA is valid
+            if(T.numConnections > maxConnections) retry = true;// if number of connections exceed cap
+            else{// if number of connection does not exceed cap check connections
+                for (int y = 0; y < T.numENodes; y++){// go though all the edge nodes
+                    for (int x = T.numENodes + T.numNodes; x < T.tNumNodes; x++){// go through all edge connections to cloud nodes
+                        if(T.connections[y][x] == 1){// if there exists a connection between a edge and cloud node
+                            retry = true;// set retry boolean to true
+                            break;// break out of second for-loop as SDA is invalid
+                        }
+                    }
+                    if(retry) break;// break out of first for-lopp as current SDA is invalid
+                }
+            }
+        }
+
+        retry = true;
+
+        while(retry){
+            np = SDA(SDANumStates, genSDANumChars, genSDAResponseLength, SDAOutputLen);
+            np.fillOutput(v, false, cout);
+            T.setConnections(v, false, false);
+            retry = false;
+            if(T.numConnections > maxConnections) retry = true;
+            else{
+                for (int y = 0; y < T.numENodes; y++){
+                    for (int x = T.numENodes + T.numNodes; x < T.tNumNodes; x++){
+                        if(T.connections[y][x] == 1){
+                            retry = true;
+                            break;
+                        }
+                    }
+                    if(retry) break;
+                }
+            }
+        }
+
+        currentPop[i] = cp;
+        newPop[i] = np;
         genPopFits.push_back(genCalcFitness(currentPop[i], T));
     }
 
@@ -214,6 +309,7 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
 }
 
 Generational::Generational(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate) {
+    
     this->genSDANumChars = numChars;
     this->genPopSize = popSize;
     this->genTournSize = tournSize;
@@ -223,16 +319,19 @@ Generational::Generational(int numStates, int numChars, int popSize, int tournSi
     this->genMutationRate = mutRate;
 
     // define parameters for Topology
-    this->numColoumns = 5;
-    this->numRows = 5;
+    this->numColoumns = 10;
+    this->numRows = 10;
     this->numStarts = 1;
     this->numEnds = 1;
-    this->numNodes = 3;
+    this->numNodes = 15;// 30;// 3;
 
-    Topology T = Topology(numColoumns, numRows, numStarts, numEnds, numNodes);
+    
 
-    int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
-    genSDAResponseLength = outputLen;
+    Topology T = Topology(numColoumns, numRows, numStarts, numEnds, numNodes);// initialize the topology object
 
-    genEvolver(numStates, outputLen, numGen, T);
+    int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;// calculate the required ouput from the SDA
+    this->maxConnections = outputLen;
+    genSDAResponseLength = outputLen;// assign that value to the SDA response length global variable
+
+    genEvolver(numStates, outputLen, numGen, T);// call the genetic algorithm
 }

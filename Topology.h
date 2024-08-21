@@ -13,7 +13,7 @@ class Topology {
 public:
     explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30);
     int ShortestPath(int position, vector<double> &sPath);
-    void setConnections(vector<int> c, bool verbose = false);
+    void setConnections(vector<int> c, bool verbose = false, bool analyzeData = false);
 
     /**
      * The layout of the network that the program will attempt to find the optimal configuration for
@@ -31,7 +31,8 @@ public:
     int numENodes;// number of edge/fog nodes present in the network
     int tNumNodes; // variable representing total number of nodes in the network
     int dataStreams;
-    bool print1 = true;
+    int numConnections;
+    bool analyzeData;
 
 private:
     void PrintLayout();

@@ -24,8 +24,9 @@ class Generational {
         vector<int> genTournSelect(int size, bool decreasing);
         int genMatingEvent(SDA *currentPop, SDA *newPop, Topology T);
         vector<double> genPopFits;
-        int genEvolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20, Topology T);
+        int genEvolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20, Topology T = Topology(5,5,1,1,3));
 
+        int maxConnections = 100000;
         int genSDANumChars = 2;
         int genSDAResponseLength = 2;
         int genPopSize = 100;

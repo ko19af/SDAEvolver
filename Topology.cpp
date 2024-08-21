@@ -328,7 +328,7 @@ void Topology::findNode(int &x, int &y, int node){
  * @param c is the vector produced by the SDA detainling the connections present in the network
 */
 
-void Topology::setConnections(vector<int> c, bool verbose){
+void Topology::setConnections(vector<int> c, bool verbose, bool analyzeData){
     vector<vector<int>> connections(tNumNodes, vector<int>(tNumNodes, 0));
     int pos = 0;// keep track of position in SDA connection vector
     
@@ -336,16 +336,23 @@ void Topology::setConnections(vector<int> c, bool verbose){
         for (int x = 0; x < y; x++){
             connections[y][x] = c[pos];
             connections[x][y] = c[pos];
-            pos++;// increment position in SDA connection vector
+            if(c[pos] == 1) numConnections++;// if there is a connection between the nodes increment the connection count
+            pos++; // increment position in SDA connection vector
         }
     }
 
-    this->connections = connections;
-    LayerNodes();
-    DistributeTraffic();
-    if(verbose && print1){
+    this->connections = connections;// set the connection defined by the vector as the connections for the topology
+    
+    if(verbose && analyzeData){
+        LayerNodes();
+        DistributeTraffic();
         printConnections();
         printTraffic();
-        this->print1 = false;
     }
+    else if(analyzeData){
+        LayerNodes();
+        DistributeTraffic();
+    }else if(verbose){
+        printConnections();
+    }else return;
 }

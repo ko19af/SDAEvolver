@@ -211,7 +211,7 @@ int SDA::copy(SDA &other) {
  * Perform a two-point crossover between this SDA and the other SDA.  This will
  * swap the transitions and responses of this SDA with the other SDA between two
  * crossover points, A and B, with A < B.  The states with index A to B-1 will
- * be swapped.  If A is 0 then we also swap the initChar's of the SDAs.
+ * be swapped. If A is 0 then we also swap the initChar's of the SDAs.
  *
  * @param other The other SDA
  * @return -1 if there is an error
