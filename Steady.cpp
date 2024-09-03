@@ -199,7 +199,7 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents){
     return 0;
 }
 
-Steady::Steady(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate){
+Steady::Steady(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){
     Topology steadyT(5,5,1,1,3);
     this->T = T;
     this->SDANumChars = numChars;
@@ -209,6 +209,8 @@ Steady::Steady(int numStates, int numChars, int popSize, int tournSize, int numG
     this->mutOperator = mutOperator;
     this->mutationRate = mutRate;
     this->tournSize = tournSize;
+
+    this->heurFunction = heurFunction;
 
     int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
     Evolver(numStates, outputLen, numGen);

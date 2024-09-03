@@ -115,16 +115,13 @@ vector<int> Generational::genTournSelect(int size, bool decreasing) {
     int idxToAdd, idxToCheck;
 
     tournIdxs.reserve(size);
-    // If we want to sort the population, we call tournSelect with size == popsize
-    if (size == genPopSize) {
+    if (size == genPopSize) {// If we want to sort the population, we call tournSelect with size == popsize
         for (int idx = 0; idx < size; idx++) {
             tournIdxs.push_back(idx);
         }
     } else {
-        // For each member we want to add to the tournament
-        for (int mem = 0; mem < size; mem++) {
-            // Find an index that's not in the tournament tournMaxRepeats times
-            do {
+        for (int mem = 0; mem < size; mem++) {// For each member we want to add to the tournament
+            do {// Find an index that's not in the tournament tournMaxRepeats times
                 idxToAdd = (int) lrand48() % genPopSize;
             } while (count(tournIdxs.begin(), tournIdxs.end(), idxToAdd) >= tournMaxRepeats);
 
@@ -147,13 +144,11 @@ vector<int> Generational::genTournSelect(int size, bool decreasing) {
         }
     }
 
-    // Sort the indexes, default is ascending
     //sort(tournIdxs.begin(), tournIdxs.end(), genCompareFitness);
-    sort(tournIdxs.begin(), tournIdxs.end());
-    // Flip the sort to descending
-    if (decreasing){
-        reverse(tournIdxs.begin(), tournIdxs.end());
-    }
+    
+    // Sort the indexes in descending order
+    if (decreasing) sort(tournIdxs.begin(), tournIdxs.end(),  greater<int>());
+    else sort(tournIdxs.begin(), tournIdxs.end());
     return tournIdxs;
 }
 
@@ -189,8 +184,29 @@ double Generational::genCalcFitness(SDA &member, Topology T){
     vector<int> c(genSDAResponseLength);// vector for holding response from SDA
     member.fillOutput(c, false, cout);// fill vector using SDA
     T.setConnections(c, false, false);//set the connections in the topology
-
-    return distanceFitness(T);
+    switch(heurFunction){
+        case 0:
+        return distanceFitness(T);
+            break;
+        case 1:
+            return distanceFitness(T) + dataFitness(T);
+            break;
+        case 2:
+            return distanceFitness(T) + energyFitness(T);
+            break;
+        case 3:
+            return distanceFitness(T) + dataFitness(T) + energyFitness(T);
+            break;
+        case 4:
+            return dataFitness(T) + energyFitness(T);
+            break;
+        case 5:
+            return dataFitness(T);
+            break;
+        case 6:
+            return energyFitness(T);
+        }
+        return 0;
 }
 
 /**
@@ -255,17 +271,20 @@ int Generational::genPrintPopFits(ostream &outStrm, vector<double> &popFits) {
     outStrm << "Fitness Values: ";
     int count = 0;
     bool first = true;
-    for (double fit: popFits) {
-        // This ensures commas after each fitness value other than the last
-        if (!first) {
-            outStrm << ", ";
-        }
-        outStrm << fit;
-        if (fit > 150){
-            count++;
-        }
-        first = false;
-    }
+    for (double fit: popFits)
+            {
+                // This ensures commas after each fitness value other than the last
+                if (!first)
+                {
+                    outStrm << ", ";
+                }
+                outStrm << fit;
+                if (fit > 150)
+                {
+                    count++;
+                }
+                first = false;
+            }
     outStrm << "\n";
     //outStrm << "Above 0.5: " << count << "\n";
     return 0;
@@ -357,7 +376,7 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
     return 0;
 }
 
-Generational::Generational(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate) {
+Generational::Generational(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction) {
     
     this->genSDANumChars = numChars;
     this->genPopSize = popSize;
@@ -366,15 +385,14 @@ Generational::Generational(int numStates, int numChars, int popSize, int tournSi
     this->genCrossRate = crossRate;
     this->genMutOperator = mutOperator;
     this->genMutationRate = mutRate;
+    this->heurFunction = heurFunction;
 
     // define parameters for Topology
     this->numColoumns = 10;
     this->numRows = 10;
     this->numStarts = 1;
     this->numEnds = 1;
-    this->numNodes = 15;// 30;// 3;
-
-    
+    this->numNodes = 30;
 
     Topology T = Topology(numColoumns, numRows, numStarts, numEnds, numNodes);// initialize the topology object
 

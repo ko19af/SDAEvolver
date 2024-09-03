@@ -13,7 +13,7 @@ using namespace std;
 class Generational {
 
     public:
-        explicit Generational(int numStates, int numChars, int popSize, int tournSelector, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate);
+        explicit Generational(int numStates, int numChars, int popSize, int tournSelector, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
         double genCalcFitness(SDA &member, Topology T);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
         
 
@@ -29,6 +29,7 @@ class Generational {
         vector<int> genTournSelect(int size, bool decreasing);
 
         vector<double> genPopFits;
+        int heurFunction = 0;
         int maxConnections = 100000;
         int genSDANumChars = 2;
         int genSDAResponseLength = 2;
