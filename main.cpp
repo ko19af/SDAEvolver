@@ -12,17 +12,17 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 
-    int numStates = 100;
+    int numStates = 6;
     int numChars = 2;
-    int popSize = 10;
-    int tournSelector = 7;
+    int popSize = 50;
+    int tournSelector = 3;
     int gaOperator = 0;
-    int numGen = 1;
+    int numGen = 100000;
     int crossOp = 1;
-    double crossRate = 0.5;
+    double crossRate = .1;
     int mutOperator = 1;
-    double mutRate = 0.5;
-    int runs = 1;
+    double mutRate = 0.1;
+    int runs = 30;
     int heurFunction = 0;
 
     //collect hyper-parameters for the run

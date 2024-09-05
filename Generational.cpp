@@ -10,17 +10,20 @@
  * @return
  */
 int Generational::genMatingEvent(SDA *currentPop, SDA *newPop, Topology T) {
-    // Tournament Selection
-    vector<int> tournIdxs = genTournSelect(genTournSize, genLowerBetter);
+    vector<int> tournIdxs = genTournSelect(genTournSize, genLowerBetter);// perform Tournament Selection
     SDA parent1, parent2, child1, child2, bc1, bc2;
+    int idx1, idx2;// variables holding the values of the tournament indexes
 
-    for (int event = elitism; event < genPopSize; event += 2) {
+    for (int event = elitism; event < genPopSize; event += 2) {// fill population starting after elite members
         do {
-            parent1 = currentPop[tournIdxs[(int) lrand48() % genTournSize]];
-            parent2 = currentPop[tournIdxs[(int) lrand48() % genTournSize]];
-        } while (parent1 == parent2); // TODO: Ensure this check works
+            idx1 = tournIdxs[(int) lrand48() % genTournSize];
+            idx2 = tournIdxs[(int)lrand48() % genTournSize];
+        } while (idx1 == idx2); // choose two different tournament members
 
-        child1.copy(parent1);
+        parent1 = currentPop[idx1];// set parents to the tournament members
+        parent2 = currentPop[idx2];
+
+        child1.copy(parent1);// copy the parents to the children
         child2.copy(parent2);
 
         // perform initial Crossover
@@ -89,11 +92,11 @@ int Generational::genMatingEvent(SDA *currentPop, SDA *newPop, Topology T) {
             }
         } if(change) child2.copy(bc2);//if og child2 is seen as invalid set child2 SDA to the valid SDA
 
-        // Add to new population
+        // Add the produced children to the new population
         newPop[event] = child1;
         newPop[event + 1] = child2;
 
-        // Calculate fitness
+        // Calculate the fitness of the resulting children
         genPopFits[event] = genCalcFitness(child1, T);
         genPopFits[event + 1] = genCalcFitness(child2, T);
     }
@@ -144,11 +147,6 @@ vector<int> Generational::genTournSelect(int size, bool decreasing) {
         }
     }
 
-    //sort(tournIdxs.begin(), tournIdxs.end(), genCompareFitness);
-    
-    // Sort the indexes in descending order
-    if (decreasing) sort(tournIdxs.begin(), tournIdxs.end(),  greater<int>());
-    else sort(tournIdxs.begin(), tournIdxs.end());
     return tournIdxs;
 }
 
@@ -351,17 +349,27 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
 
     // Step 2: Evolution
     for (int gen = 0; gen < numGenerations; ++gen) {
-        // Keep the most elite members
-        vector<int> sortedIdxs = genTournSelect(genPopSize, genLowerBetter);
-        vector<double> oldFits;
-        for (int elite = 0; elite < elitism; ++elite) {
-            newPop[elite].copy(currentPop[sortedIdxs[elite]]);
-            oldFits.push_back(genPopFits[sortedIdxs[elite]]);
+        
+        // Perform elitisim
+        vector<double> elite(elitism, DBL_MAX);// vector holding two most elite fitnesses 
+        int idx1, idx2;// index locations of the two most elite SDA
+        for (int e = 0; e < genPopFits.size(); e++){// go through the genertions pop fitness
+            if(elite[0] > genPopFits[e]){
+                elite[0] = genPopFits[e];// update elite 1 fitness value
+                idx1 = e; // memner fitness better than elite 1
+            } 
+            else if(elite[1] > genPopFits[e]){
+                elite[1] = genPopFits[e];// update elite 2 fintess value
+                idx2 = e;// member fitness better than elite 2 and not used by elite 1
+            } 
         }
-        // Store the fitness of the most elite members in popFits
-        for (int mem = 0; mem < elitism; mem++){
-            genPopFits[mem] = oldFits[mem];
-        }
+        // copy the elite SDA to the new population
+        newPop[0].copy(currentPop[idx1]);
+        newPop[1].copy(currentPop[idx2]);
+
+        // Store the fitness of the most elite members in the first two positions
+        genPopFits[0] = genPopFits[idx1];
+        genPopFits[1] = genPopFits[idx2];
 
         // Generate the new population
         genMatingEvent(currentPop, newPop, T);
@@ -372,6 +380,7 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
         }
         genPrintPopFits(cout, genPopFits);
     }
+    cout << "Final Fitness of Run: ";
     genPrintPopFits(cout, genPopFits);
     return 0;
 }
