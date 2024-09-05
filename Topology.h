@@ -11,7 +11,7 @@ using namespace std;
 
 class Topology {
 public:
-    explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30);
+    explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = true);
     int ShortestPath(int position, vector<double> &sPath);
     void setConnections(vector<int> c, bool verbose = false, bool analyzeData = false);
 

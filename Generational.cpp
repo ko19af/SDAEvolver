@@ -394,7 +394,7 @@ Generational::Generational(int numStates, int numChars, int popSize, int tournSi
     this->numEnds = 1;
     this->numNodes = 30;
 
-    Topology T = Topology(numColoumns, numRows, numStarts, numEnds, numNodes);// initialize the topology object
+    Topology T = Topology(numColoumns, numRows, numStarts, numEnds, numNodes, false);// initialize the topology object
 
     int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;// calculate the required ouput from the SDA
     this->maxConnections = outputLen;

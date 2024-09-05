@@ -5,7 +5,7 @@
  * be attempting to construct an optimal configuration for.
 */
 
-Topology::Topology(int x, int y, int starts, int ends, int numNodes){
+Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbose){
     
     vector<vector<bool>> network(y, vector<bool>(x, false));
     
@@ -22,7 +22,7 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes){
     ChooseStart(x, starts);
     ChooseEnd(y, x, ends);
     ChooseNodeLocations(x, y, numNodes);
-    PrintLayout();
+    if(verbose) PrintLayout();
 }
 
 /**
