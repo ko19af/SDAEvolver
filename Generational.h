@@ -29,6 +29,7 @@ class Generational {
         vector<int> genTournSelect(int size, bool decreasing);
 
         vector<double> genPopFits;
+        vector<double> genNewPopFits;
         int heurFunction = 0;
         int maxConnections = 100000;
         int genSDANumChars = 2;

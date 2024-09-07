@@ -335,9 +335,14 @@ void Topology::setConnections(vector<int> c, bool verbose, bool analyzeData){
 
     for (int y = 0; y < connections.size(); y++){// fill the connection matrix
         for (int x = 0; x < y; x++){
-            connections[y][x] = c[pos];
-            connections[x][y] = c[pos];
-            if(c[pos] == 1) numConnections++;// if there is a connection between the nodes increment the connection count
+            if(y >= (numNodes+numENodes) && x < numENodes){// set connections between edge & cloud nodes to zero
+                connections[y][x] = 0;
+                connections[x][y] = 0;
+            }else{// set connection based on vector given from SDA
+                connections[y][x] = c[pos];
+                connections[x][y] = c[pos];
+                if(c[pos] == 1) numConnections++;// if there is a connection between the nodes increment the connection count
+            }
             pos++; // increment position in SDA connection vector
         }
     }

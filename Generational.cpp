@@ -35,70 +35,13 @@ int Generational::genMatingEvent(SDA *currentPop, SDA *newPop, Topology T) {
                 child2.mutate(genNumMutations);
         }
 
-        vector<int> v(genSDAResponseLength);// vector for holding response from SDA
-        child1.fillOutput(v, false, cout);// fill the vector with the ouput from the SDA
-        T.setConnections(v, false, false);// set the connections in the Topology based on the SDA output
-        bool retry = true;
-        bool change = false;
-
-        while(retry){
-            retry = false;
-            if(T.numConnections > maxConnections) retry = true;
-            else{
-                for (int y = 0; y < T.numENodes; y++){// go though all the edge nodes
-                    for (int x = T.numENodes + T.numNodes; x < T.tNumNodes; x++){// go through all edge connections to cloud nodes
-                        if(T.connections[y][x] == 1){// if there exists a connection between a edge and cloud node
-                            bc1.copy(parent1);// make copies of the parents seperarte from the children
-                            bc2.copy(parent2);
-                            if(genCrossOp == 1 && drand48() < genCrossRate) bc1.crossover(bc2);// reperform crossover and mutation
-                            if (drand48() < genMutationRate && genMutOperator == 1) bc1.mutate(genNumMutations);
-                            bc1.fillOutput(v, false, cout);// fill the ouput with the new SDA
-                            T.setConnections(v, false, false); // set the connections in the topology
-                            retry = true;
-                            change = true;
-                            break;
-                        }
-                    }
-                    if(retry) break;
-                }
-            }
-        } if(change) child1.copy(bc1);//if og child was seen as invalid in loop set child1 SDA to the valid SDA
-
-        child2.fillOutput(v, false, cout);// repeat above process for child2
-        T.setConnections(v, false, false);// set the connections in the Topology based on the SDA output
-        retry = true;
-        change = false;
-
-        while(retry){
-            retry = false;
-            if(T.numConnections > maxConnections) retry = true;
-            else{
-                for (int y = 0; y < T.numENodes; y++){
-                    for (int x = T.numENodes + T.numNodes; x < T.tNumNodes; x++){
-                        if(T.connections[y][x] == 1){
-                            bc1.copy(parent1);
-                            bc2.copy(parent2);
-                            if(genCrossOp == 1 && drand48() < genCrossRate) bc2.crossover(bc1);
-                            if (drand48() < genMutationRate && genMutOperator == 1) bc2.mutate(genNumMutations);
-                            bc2.fillOutput(v, false, cout);
-                            T.setConnections(v, false, false);
-                            retry = true;
-                            change = true;
-                            break;
-                        }
-                    }
-                    if(retry) break;
-                }
-            }
-        } if(change) child2.copy(bc2);//if og child2 is seen as invalid set child2 SDA to the valid SDA
-
         // Add the produced children to the new population
         newPop[event] = child1;
         newPop[event + 1] = child2;
 
         // Calculate the fitness of the resulting children
-        genPopFits[event] = genCalcFitness(child1, T);
-        genPopFits[event + 1] = genCalcFitness(child2, T);
+        genNewPopFits.push_back(genCalcFitness(child1, T));
+        genNewPopFits.push_back(genCalcFitness(child2, T));
     }
     return 0;
 }
@@ -141,12 +84,10 @@ vector<int> Generational::genTournSelect(int size, bool decreasing) {
                     idxToAdd = idxToCheck;
                 }
             }
-
             // Add the index to the tournament
             tournIdxs.push_back(idxToAdd);
         }
     }
-
     return tournIdxs;
 }
 
@@ -289,67 +230,24 @@ int Generational::genPrintPopFits(ostream &outStrm, vector<double> &popFits) {
 }
 
 int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerations, Topology T) {
-    SDA *currentPop, *newPop, np, cp;
+    SDA *currentPop, *newPop, cp;
     currentPop = new SDA[genPopSize];
     newPop = new SDA[genPopSize];
     genPopFits.reserve(genPopSize);
 
     // Step 1: initialize the population
     for (int i = 0; i < genPopSize; ++i) {
-
-        vector<int> v(genSDAResponseLength);// vector for holding response from SDA
-        bool retry = true;
-
-        while(retry){
-            cp = SDA(SDANumStates, genSDANumChars, genSDAResponseLength, SDAOutputLen);// create a new SDA
-            cp.fillOutput(v, false, cout);// fill the vector with the new SDA's output
-            T.setConnections(v, false, false);// set the connections in the topology
-            retry = false;// set retry bool to false so loop is exited if the SDA is valid
-            if(T.numConnections > maxConnections) retry = true;// if number of connections exceed cap
-            else{// if number of connection does not exceed cap check connections
-                for (int y = 0; y < T.numENodes; y++){// go though all the edge nodes
-                    for (int x = T.numENodes + T.numNodes; x < T.tNumNodes; x++){// go through all edge connections to cloud nodes
-                        if(T.connections[y][x] == 1){// if there exists a connection between a edge and cloud node
-                            retry = true;// set retry boolean to true
-                            break;// break out of second for-loop as SDA is invalid
-                        }
-                    }
-                    if(retry) break;// break out of first for-lopp as current SDA is invalid
-                }
-            }
-        }
-
-        retry = true;
-
-        while(retry){
-            np = SDA(SDANumStates, genSDANumChars, genSDAResponseLength, SDAOutputLen);
-            np.fillOutput(v, false, cout);
-            T.setConnections(v, false, false);
-            retry = false;
-            if(T.numConnections > maxConnections) retry = true;
-            else{
-                for (int y = 0; y < T.numENodes; y++){
-                    for (int x = T.numENodes + T.numNodes; x < T.tNumNodes; x++){
-                        if(T.connections[y][x] == 1){
-                            retry = true;
-                            break;
-                        }
-                    }
-                    if(retry) break;
-                }
-            }
-        }
-
-        currentPop[i] = cp;
-        newPop[i] = np;
-        genPopFits.push_back(genCalcFitness(currentPop[i], T));
+        currentPop[i] = SDA(SDANumStates, genSDANumChars, genSDAResponseLength, SDAOutputLen);;// place member into population
+        genPopFits.push_back(genCalcFitness(currentPop[i], T));// calculate new members fitness
     }
 
-    genPrintPopFits(cout, genPopFits);
+    genPrintPopFits(cout, genPopFits);// print population fitness
 
     // Step 2: Evolution
     for (int gen = 0; gen < numGenerations; ++gen) {
-        
+        genNewPopFits.clear();
+        genNewPopFits.reserve(genPopSize);
+
         // Perform elitisim
         vector<double> elite(elitism, DBL_MAX);// vector holding two most elite fitnesses 
         int idx1, idx2;// index locations of the two most elite SDA
@@ -361,15 +259,15 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
             else if(elite[1] > genPopFits[e]){
                 elite[1] = genPopFits[e];// update elite 2 fintess value
                 idx2 = e;// member fitness better than elite 2 and not used by elite 1
-            } 
+            }
         }
         // copy the elite SDA to the new population
         newPop[0].copy(currentPop[idx1]);
         newPop[1].copy(currentPop[idx2]);
 
         // Store the fitness of the most elite members in the first two positions
-        genPopFits[0] = genPopFits[idx1];
-        genPopFits[1] = genPopFits[idx2];
+        genNewPopFits.push_back(genPopFits[idx1]);
+        genNewPopFits.push_back(genPopFits[idx2]);
 
         // Generate the new population
         genMatingEvent(currentPop, newPop, T);
@@ -378,10 +276,10 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
         for (int mem = 0; mem < genPopSize; mem++){
             currentPop[mem] = newPop[mem];
         }
-        genPrintPopFits(cout, genPopFits);
+        genPrintPopFits(cout, genNewPopFits);
     }
     cout << "Final Fitness of Run: ";
-    genPrintPopFits(cout, genPopFits);
+    genPrintPopFits(cout, genNewPopFits);
     return 0;
 }
 

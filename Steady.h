@@ -13,16 +13,19 @@ using namespace std;
 class Steady {
     public:
         explicit Steady(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
-        double CalcFitness(SDA &member);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
+        double CalcFitness(SDA &member, Topology T);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
 
     private:
-        
+        double distanceFitness(Topology T);
+        double energyFitness(Topology T);
+        double dataFitness(Topology T);
+
         int PrintPopFits(ostream &outStrm, vector<double> &popFits);
         bool CompareFitness(int popIdx1, int popIdx2);
         vector<int> TournSelect(int size, bool decreasing);
-        int MatingEvent(SDA *population);
+        int MatingEvent(SDA *population, Topology T);
         vector<double> popFits;
-        int Evolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20);
+        int Evolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20, Topology T = Topology(5,5,1,1,5,true));
         int PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population);
 
         int heurFunction = 0;
@@ -40,7 +43,12 @@ class Steady {
         int mutOperator = 1;
         int crossOp = 1;
         double crossRate = 0.5;
-        Topology T;
+        int numColoumns = 5;
+        int numRows = 5;
+        int numStarts = 1;
+        int numEnds = 1;
+        int numNodes = 3;
+        int maxConnections;
 };
 
 #endif // Topology_H

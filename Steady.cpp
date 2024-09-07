@@ -9,10 +9,10 @@
  * @param population the population undergoing evolution
  * @return
  */
-int Steady::MatingEvent(SDA* population){
+int Steady::MatingEvent(SDA* population, Topology T){
     // Tournament Selection
     vector<int> tournIdxs = TournSelect(tournSize, lowerBetter);
-    SDA parent1, parent2, child1, child2;
+    SDA parent1, parent2, child1, child2, bc1, bc2;
     parent1 = population[tournIdxs[0]];
     parent2 = population[tournIdxs[1]];
     child1.copy(parent1);
@@ -32,8 +32,8 @@ int Steady::MatingEvent(SDA* population){
     population[tournIdxs[tournSize - 2]] = child2;
 
     // Update fitness of worst two members of the tournament
-    popFits[tournIdxs[tournSize-1]] = CalcFitness(child1);
-    popFits[tournIdxs[tournSize-2]] = CalcFitness(child2);
+    popFits[tournIdxs[tournSize-1]] = CalcFitness(child1, T);
+    popFits[tournIdxs[tournSize-2]] = CalcFitness(child2, T);
 
     return 0;
 }
@@ -97,27 +97,71 @@ bool Steady::CompareFitness(int popIdx1, int popIdx2) {
     return false;
 }
 
-double Steady::CalcFitness(SDA &member){
+double Steady::CalcFitness(SDA &member, Topology T){
 
-    int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
-    vector<int> c(outputLen);// vector for holding response from SDA
+    vector<int> c(SDAResponseLength);// vector for holding response from SDA
     member.fillOutput(c, false, cout);// fill vector using SDA
-    T.setConnections(c, true);//set the connections in the topology
+    T.setConnections(c, false, false);//set the connections in the topology
+    switch(heurFunction){
+        case 0:
+        return distanceFitness(T);
+            break;
+        case 1:
+            return distanceFitness(T) + dataFitness(T);
+            break;
+        case 2:
+            return distanceFitness(T) + energyFitness(T);
+            break;
+        case 3:
+            return distanceFitness(T) + dataFitness(T) + energyFitness(T);
+            break;
+        case 4:
+            return dataFitness(T) + energyFitness(T);
+            break;
+        case 5:
+            return dataFitness(T);
+            break;
+        case 6:
+            return energyFitness(T);
+        }
+        return 0.0;
+}
 
+/**
+ * This method calculates the average amount of data flowing through each node in the network
+ * 
+ * @param T is the topology being used in the evaluation of the fitness
+ * @return is the average amount of data being passed through the nodes in the network
+ */
+
+double Steady::dataFitness(Topology T){
+    double val = 0.0;// is the fitness of the data being passed through the nodes in the topology
+
+    for (int y = T.numENodes; y < T.tNumNodes; y++){// for each node that is not an edge node
+        double d = 0.0;// varialbe to record the amount of data a node is receiving
+        for (int x = 0; x < T.tNumNodes; x++) d += T.trafficMatrix[y][x];// add up all the data the node is receving
+        val += d / T.data[y].size();// average out the amount of data based on the amount of packet streams it is receving
+    }
+    return val / (T.tNumNodes-T.numENodes);// return the averaged value for all the nodes in the network
+}
+
+/**
+ * This method calculates the fitness of the connection distance in the topology
+ * 
+ * @param T is the topology being evaluates
+ * @return is the average distance all edge nodes are from a cloud node
+ */
+
+double Steady::distanceFitness(Topology T){
     // Fitness function sums all distances an edge node uses to reach a cloud node through topology
-    int val = 0;
+    double val = 0;
     for (int x = 0; x < T.numENodes; x++){// for each edge node
-        vector<double> sPath;// create vector to record distance from edge node to all other nodes
-        sPath.reserve(T.tNumNodes);
-        sPath.assign(T.tNumNodes, DBL_MAX); // set all values to max double value
+        vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
         sPath[x] = 0;// set distance to starting edge node to zero
         T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
 
-        for (int s:sPath) cout << to_string(s) + '\t';//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        cout << endl;
-
         int count = 0;// number of cloud nodes edge node connects to
-        int dist = 0;// total distance from edge node to cloud node
+        double dist = 0;// total distance from edge node to cloud node
         for (int i = 0; i < T.numCNodes; i++){
             if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
                 dist += sPath[T.tNumNodes - 1 - i];// add distance
@@ -127,6 +171,18 @@ double Steady::CalcFitness(SDA &member){
         if(count != 0) val += dist / count;// add average connection distance to total distance value
     }
     return val/T.numENodes;// return the average distance from all edge nodes to a cloud node
+}
+
+/**
+ * This method calculates the fitness of the energy consumption in the topology
+ * 
+ * @param T is the topology being examined
+ * @return is the average energy consumption per node in the network
+ */
+
+double Steady::energyFitness(Topology T){
+
+    return 0.0;
 }
 
 int Steady::PrintPopFits(ostream &outStrm, vector<double> &popFits) {
@@ -174,22 +230,23 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
     return 0;
 }
 
-int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents){
+int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Topology T){
     SDA* population;
     population = new SDA[popSize];
     popFits.reserve(popSize);
 
     // Step 1: initialize the population
     for (int i = 0; i < popSize; ++i) {
-        population[i] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAOutputLen);
-        popFits[i] = CalcFitness(population[i]);
+        population[i] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAOutputLen);// create a new SDA
+        popFits.push_back(CalcFitness(population[i], T));
     }
 
     PrintPopFits(cout, popFits);
 
     // Step 2: Evolution
     for (int gen = 0; gen < numMatingEvents; ++gen) {
-        MatingEvent(population);
+        MatingEvent(population, T);
+        PrintPopFits(cout, popFits);
     }
 
     // Step 3: Reporting
@@ -200,8 +257,7 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents){
 }
 
 Steady::Steady(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){
-    Topology steadyT(5,5,1,1,3);
-    this->T = T;
+    
     this->SDANumChars = numChars;
     this->popSize = popSize;
     this->crossOp = crossOp;
@@ -212,6 +268,18 @@ Steady::Steady(int numStates, int numChars, int popSize, int tournSize, int numG
 
     this->heurFunction = heurFunction;
 
+   // define parameters for Topology
+    this->numColoumns = 10;
+    this->numRows = 10;
+    this->numStarts = 1;
+    this->numEnds = 1;
+    this->numNodes = 30;
+
+    Topology T = Topology(numColoumns, numRows, numStarts, numEnds, numNodes, false);// initialize the topology object
+
     int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
-    Evolver(numStates, outputLen, numGen);
+    this->maxConnections = outputLen;
+    SDAResponseLength = outputLen;// assign that value to the SDA response length global variable
+
+    Evolver(numStates, outputLen, numGen, T);
 }
