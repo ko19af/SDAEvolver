@@ -2,6 +2,7 @@
 #define Generational_H
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <bits/stdc++.h>
@@ -13,7 +14,7 @@ using namespace std;
 class Generational {
 
     public:
-        explicit Generational(int numStates, int numChars, int popSize, int tournSelector, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
+        explicit Generational(ostream& MyFile, int numStates, int numChars, int popSize, int tournSelector, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
         double genCalcFitness(SDA &member, Topology T);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
         
 
@@ -21,7 +22,7 @@ class Generational {
         
         int genPrintPopFits(ostream &outStrm, vector<double> &popFits);
         int genMatingEvent(SDA *currentPop, SDA *newPop, Topology T);
-        int genEvolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20, Topology T = Topology(5,5,1,1,3));
+        int genEvolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20, Topology T = Topology(5,5,1,1,3), ostream& MyFile = cout);
         double dataFitness(Topology T);
         double distanceFitness(Topology T);
         double energyFitness(Topology T);
@@ -37,7 +38,7 @@ class Generational {
         int genPopSize = 100;
         int genTournSize = 7;
         int tournCandidates = 4;
-        int tournMaxRepeats = 10;
+        int tournMaxRepeats = 2;
         int elitism = 2;
         bool genLowerBetter = false;
         double genMutationRate = 0.1;

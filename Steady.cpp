@@ -177,12 +177,13 @@ double Steady::distanceFitness(Topology T){
  * This method calculates the fitness of the energy consumption in the topology
  * 
  * @param T is the topology being examined
- * @return is the average energy consumption per node in the network
+ * @return is the average energy in the network
  */
 
 double Steady::energyFitness(Topology T){
-
-    return 0.0;
+    double val = 0.0;// is the fitness of the data being passed through the nodes in the topology
+    for (double e : T.energyConsumption)val += e;// add up energy consumption in the network
+    return val / (T.tNumNodes-T.numENodes);// return the averaged value for all the nodes in the network
 }
 
 int Steady::PrintPopFits(ostream &outStrm, vector<double> &popFits) {
@@ -226,11 +227,11 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
     outStrm << "Best Layout: " << "Coming Soon" << endl;
     outStrm << "Best Fitness: " << popFits[bestIdx] << endl;
     outStrm << "Average Fitness: " << avgFit/popFits.size() << endl;
-
+    
     return 0;
 }
 
-int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Topology T){
+int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Topology T, ostream& MyFile){
     SDA* population;
     population = new SDA[popSize];
     popFits.reserve(popSize);
@@ -241,23 +242,25 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Top
         popFits.push_back(CalcFitness(population[i], T));
     }
 
-    PrintPopFits(cout, popFits);
+    MyFile << "Initial Pop Fitness values: " << endl;
+    PrintPopFits(MyFile, popFits);
 
     // Step 2: Evolution
     for (int gen = 0; gen < numMatingEvents; ++gen) {
         MatingEvent(population, T);
-        PrintPopFits(cout, popFits);
+        if(gen % 10 == 0) PrintPopFits(MyFile, popFits);// print every 10th generation
     }
 
     // Step 3: Reporting
-    PrintReport(cout, popFits, population);
+    MyFile << "Final Pop Fitness values: " << endl;
+    PrintReport(MyFile, popFits, population);
 
     delete[] population;
     return 0;
 }
 
-Steady::Steady(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){
-    
+Steady::Steady(ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){
+
     this->SDANumChars = numChars;
     this->popSize = popSize;
     this->crossOp = crossOp;
@@ -281,5 +284,5 @@ Steady::Steady(int numStates, int numChars, int popSize, int tournSize, int numG
     this->maxConnections = outputLen;
     SDAResponseLength = outputLen;// assign that value to the SDA response length global variable
 
-    Evolver(numStates, outputLen, numGen, T);
+    Evolver(numStates, outputLen, numGen, T, MyFile);
 }

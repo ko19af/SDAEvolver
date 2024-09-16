@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <bits/stdc++.h>
 #include <iomanip> 
@@ -17,7 +18,7 @@ int main(int argc, char* argv[]) {
     int popSize = 50;
     int tournSelector = 3;
     int gaOperator = 0;
-    int numGen = 100000;
+    int numGen = 1000;
     int crossOp = 1;
     double crossRate = .1;
     int mutOperator = 1;
@@ -41,7 +42,14 @@ int main(int argc, char* argv[]) {
     heurFunction = atoi(argv[12]);
     }
 
-    cout << "# States: " << numStates << " # Chars: " << numChars <<
+    string fileName = "Output/Experiment_" + to_string(numStates) + to_string(numChars) + 
+    to_string(popSize) + to_string(tournSelector) + to_string(gaOperator) + 
+    to_string(numGen) + to_string(crossOp) + to_string(crossRate) + 
+    to_string(mutOperator) + to_string(mutRate) + to_string(runs) + ".txt";
+
+    ofstream MyFile(fileName);
+
+    MyFile << "# States: " << numStates << " # Chars: " << numChars <<
      " popSize: " << popSize << " tournSelector " << tournSelector <<
       " gaOperator: " << gaOperator << " numGen: " << numGen <<
        " crossOp: " << crossOp  << " crossRate(%): " << 
@@ -52,9 +60,10 @@ int main(int argc, char* argv[]) {
     srand(1); // seed the random number generator
 
     for (int x = 0; x < runs; x++){
-        cout << "Run: " << x + 1 << endl;
-        if(gaOperator == 0) Generational(numStates, numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
-        else if(gaOperator == 1) Steady(numStates,numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
-    }   
+        MyFile << "Run: " << x + 1 << endl;
+        if(gaOperator == 0) Generational(MyFile, numStates, numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
+        else if(gaOperator == 1) Steady(MyFile, numStates,numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
+    }
+    MyFile.close();
     return 0;
 }

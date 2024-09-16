@@ -229,7 +229,7 @@ int Generational::genPrintPopFits(ostream &outStrm, vector<double> &popFits) {
     return 0;
 }
 
-int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerations, Topology T) {
+int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerations, Topology T, ostream& MyFile) {
     SDA *currentPop, *newPop, cp;
     currentPop = new SDA[genPopSize];
     newPop = new SDA[genPopSize];
@@ -241,7 +241,8 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
         genPopFits.push_back(genCalcFitness(currentPop[i], T));// calculate new members fitness
     }
 
-    genPrintPopFits(cout, genPopFits);// print population fitness
+    MyFile << "Initial Pop Fitness Value: " << endl;
+    genPrintPopFits(MyFile, genPopFits); // print population fitness
 
     // Step 2: Evolution
     for (int gen = 0; gen < numGenerations; ++gen) {
@@ -276,14 +277,14 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
         for (int mem = 0; mem < genPopSize; mem++){
             currentPop[mem] = newPop[mem];
         }
-        genPrintPopFits(cout, genNewPopFits);
+        if(gen % 10 == 0) genPrintPopFits(MyFile, genNewPopFits);// print every 10th generation
     }
-    cout << "Final Fitness of Run: ";
-    genPrintPopFits(cout, genNewPopFits);
+    MyFile << "Final Fitness of Run: ";
+    genPrintPopFits(MyFile, genNewPopFits);
     return 0;
 }
 
-Generational::Generational(int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction) {
+Generational::Generational(ostream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction) {
     
     this->genSDANumChars = numChars;
     this->genPopSize = popSize;
@@ -307,5 +308,5 @@ Generational::Generational(int numStates, int numChars, int popSize, int tournSi
     this->maxConnections = outputLen;
     genSDAResponseLength = outputLen;// assign that value to the SDA response length global variable
 
-    genEvolver(numStates, outputLen, numGen, T);// call the genetic algorithm
+    genEvolver(numStates, outputLen, numGen, T, MyFile);// call the genetic algorithm
 }

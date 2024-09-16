@@ -38,8 +38,8 @@ void Topology::EnergyConsumption(double transmissionRate, double recevingRate){
 
     for (int x = numENodes; x < tNumNodes; x++){// for each node
         double incomingData = 0.0;// calculate the total amount of data being transmitted from the node
-        for (int d = 0; d < tNumNodes; d++){// get (d)ata values from the traffic matrix
-            incomingData += trafficMatrix[x][d];
+        for (int d = 0; d < tNumNodes; d++){// get incoming traffic and distancec values
+            incomingData += trafficMatrix[x][d] + distance[x][d];
         }
         energyConsumption[x] = incomingData * transmissionRate;// multiply the number of MBps being transmitted by the energy consumption cost (0.03 W)
     }
@@ -288,17 +288,15 @@ int Topology::ShortestPath(int position, vector<double> &sPath){// initialize di
 
     for (int x = 0; x < connections.size(); x++){ // go through row recording the connections for current position
         if (connections[position][x] == 1 && position != x){ // if there is a connection to explore
-            int x1, x2, y1, y2;
-            findNode(x1, y1, position + 1); // find x and y co-ordinate of node we are at
-            findNode(x2, y2, x + 1); // find x and y co-ordinate of node we wish to calculate distance to
-            int dist = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)); // caluclate euclidean distance
+            
+            int dist = distance[position][x];// get the distance between the nodes
+            
             if (dist + sPath[position] < sPath[x]){// compare distance
-                sPath[x] = dist + sPath[position]; // if shorter path update distance in shorter path vector
+                sPath[x] = dist + sPath[position];// if shorter path update distance in shorter path vector
                 ShortestPath(x, sPath);// recalculate distance to all other nodes from that node to find shorter paths
-                }
             }
         }
-
+    }
     return 0;
 }
 
@@ -319,6 +317,27 @@ void Topology::findNode(int &x, int &y, int node){
             if(count == node) return;// if found the node return to call
         }
     }
+}
+
+/**
+ * This method calculates the distance between all the nodes in the district
+ */
+
+void Topology:: calculateDist(){
+    vector<vector<double>> d(tNumNodes, vector<double>(tNumNodes, 0.0));// vector for recording the distance
+    for (int y = 0; y < tNumNodes; y++){// go through the rows
+        for (int x = 0; x < y; x++){// go through the columns
+            if(connections[y][x] == 1 && d[y][x] <= 0){// if there is a connection and distance was not calculated
+                int x1, x2, y1, y2;// variables holding x and y co-ordinates of the nodes
+                findNode(x1, y1, y + 1); // find x and y co-ordinate of node we are at
+                findNode(x2, y2, x + 1); // find x and y co-ordinate of node we wish to calculate distance to
+                double dist = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)); // caluclate euclidean distance
+                d[y][x] = dist;
+                d[x][y] = dist;
+            }
+        }
+    }
+    this->distance = d;// store distance
 }
 
 /**
@@ -348,7 +367,9 @@ void Topology::setConnections(vector<int> c, bool verbose, bool analyzeData){
     }
 
     this->connections = connections;// set the connection defined by the vector as the connections for the topology
-    
+
+    calculateDist();// calculate the distance bettwen the nodes
+
     if(verbose && analyzeData){
         LayerNodes();
         DistributeTraffic();

@@ -24,7 +24,8 @@ public:
     vector<int> layer;
     vector<double> energyConsumption;
     vector<vector<double>> data;
-    vector<vector<double>> trafficMatrix;// two dimensional vector tracking the incoming and ougoing traffic from a node in the network
+    vector<vector<double>> distance; // 2-d vector tracking the distance between nodes
+    vector<vector<double>> trafficMatrix; // 2-d vector tracking the incoming and ougoing traffic from a node in the network
     vector<double> failed;// records data that failed to reach a cloud node
     int numNodes; // variable representing number of transmission nodes present in the network
     int numCNodes;// varialbe representing total number of cloud nodes in the topology
@@ -35,6 +36,7 @@ public:
     bool analyzeData;
 
 private:
+    void calculateDist();
     void PrintLayout();
     void printConnections();
     void printTraffic();
