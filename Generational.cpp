@@ -234,6 +234,7 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
     currentPop = new SDA[genPopSize];
     newPop = new SDA[genPopSize];
     genPopFits.reserve(genPopSize);
+    int modVal = numGenerations / 10;
 
     // Step 1: initialize the population
     for (int i = 0; i < genPopSize; ++i) {
@@ -277,7 +278,7 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
         for (int mem = 0; mem < genPopSize; mem++){
             currentPop[mem] = newPop[mem];
         }
-        if(gen % 10 == 0) genPrintPopFits(MyFile, genNewPopFits);// print every 10th generation
+        if(gen % modVal == 0) genPrintPopFits(MyFile, genNewPopFits);// print every 10th generation
     }
     MyFile << "Final Fitness of Run: ";
     genPrintPopFits(MyFile, genNewPopFits);

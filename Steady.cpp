@@ -235,6 +235,7 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Top
     SDA* population;
     population = new SDA[popSize];
     popFits.reserve(popSize);
+    int modVal = numMatingEvents / 10;
 
     // Step 1: initialize the population
     for (int i = 0; i < popSize; ++i) {
@@ -248,7 +249,7 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Top
     // Step 2: Evolution
     for (int gen = 0; gen < numMatingEvents; ++gen) {
         MatingEvent(population, T);
-        if(gen % 10 == 0) PrintPopFits(MyFile, popFits);// print every 10th generation
+        if(gen % modVal == 0) PrintPopFits(MyFile, popFits);// print every 10th generation
     }
 
     // Step 3: Reporting
