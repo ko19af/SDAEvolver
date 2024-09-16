@@ -17,14 +17,14 @@ int main(int argc, char* argv[]) {
     int numChars = 2;
     int popSize = 50;
     int tournSelector = 3;
-    int gaOperator = 0;
+    int gaOperator = 1;
     int numGen = 1000;
     int crossOp = 1;
     double crossRate = .1;
     int mutOperator = 1;
     double mutRate = 0.1;
     int runs = 30;
-    int heurFunction = 0;
+    int heurFunction = 1;
 
     //collect hyper-parameters for the run
     if(argc > 1){
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     string fileName = "Output/Experiment_" + to_string(numStates) + to_string(numChars) + 
     to_string(popSize) + to_string(tournSelector) + to_string(gaOperator) + 
     to_string(numGen) + to_string(crossOp) + to_string(crossRate) + 
-    to_string(mutOperator) + to_string(mutRate) + to_string(runs) + ".txt";
+    to_string(mutOperator) + to_string(mutRate) + to_string(runs) + to_string(heurFunction) + ".txt";
 
     ofstream MyFile(fileName);
 
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
        " crossOp: " << crossOp  << " crossRate(%): " << 
        setprecision(15) << crossRate << " mutationOperator: " <<
         mutOperator << " mutationRate(%):  " << setprecision(15) <<
-         mutRate << " runs: " << runs << endl;
+         mutRate <<  "Heurestic: " << heurFunction << " runs: " << runs << endl;
 
     srand(1); // seed the random number generator
 

@@ -347,7 +347,7 @@ void Topology:: calculateDist(){
  * @param c is the vector produced by the SDA detainling the connections present in the network
 */
 
-void Topology::setConnections(vector<int> c, bool verbose, bool analyzeData){
+void Topology::setConnections(vector<int> c, bool verbose, int heurFunction){
     vector<vector<int>> connections(tNumNodes, vector<int>(tNumNodes, 0));
     this->numConnections = 0;
     int pos = 0; // keep track of position in SDA connection vector
@@ -368,18 +368,15 @@ void Topology::setConnections(vector<int> c, bool verbose, bool analyzeData){
 
     this->connections = connections;// set the connection defined by the vector as the connections for the topology
 
-    calculateDist();// calculate the distance bettwen the nodes
-
-    if(verbose && analyzeData){
+    if(heurFunction == 0) calculateDist();// calculate the distance bettwen the nodes
+    else if(heurFunction > 0){
+        calculateDist();
         LayerNodes();
         DistributeTraffic();
+    }
+    if(verbose && heurFunction > 0){
         printConnections();
         printTraffic();
-    }
-    else if(analyzeData){
-        LayerNodes();
-        DistributeTraffic();
-    }else if(verbose){
-        printConnections();
-    }else return;
+    }else if(verbose) printConnections();
+    
 }

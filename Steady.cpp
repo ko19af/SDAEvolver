@@ -101,28 +101,28 @@ double Steady::CalcFitness(SDA &member, Topology T){
 
     vector<int> c(SDAResponseLength);// vector for holding response from SDA
     member.fillOutput(c, false, cout);// fill vector using SDA
-    T.setConnections(c, false, false);//set the connections in the topology
+    T.setConnections(c, false, heurFunction);//set the connections in the topology
     switch(heurFunction){
         case 0:
         return distanceFitness(T);
             break;
         case 1:
-            return distanceFitness(T) + dataFitness(T);
+            return dataFitness(T);
             break;
         case 2:
-            return distanceFitness(T) + energyFitness(T);
+            return energyFitness(T);
             break;
         case 3:
-            return distanceFitness(T) + dataFitness(T) + energyFitness(T);
+            return distanceFitness(T) + energyFitness(T);
             break;
         case 4:
             return dataFitness(T) + energyFitness(T);
             break;
         case 5:
-            return dataFitness(T);
+            return distanceFitness(T) + dataFitness(T);
             break;
         case 6:
-            return energyFitness(T);
+            return distanceFitness(T) + dataFitness(T) + energyFitness(T); 
         }
         return 0.0;
 }
@@ -140,7 +140,7 @@ double Steady::dataFitness(Topology T){
     for (int y = T.numENodes; y < T.tNumNodes; y++){// for each node that is not an edge node
         double d = 0.0;// varialbe to record the amount of data a node is receiving
         for (int x = 0; x < T.tNumNodes; x++) d += T.trafficMatrix[y][x];// add up all the data the node is receving
-        val += d / T.data[y].size();// average out the amount of data based on the amount of packet streams it is receving
+        if(d != 0) val += d / T.data[y].size();// average out the amount of data based on the amount of packet streams it is receving
     }
     return val / (T.tNumNodes-T.numENodes);// return the averaged value for all the nodes in the network
 }
@@ -218,7 +218,7 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
 
     for (int x = 0; x < popFits.size(); x++){// For each entry
         avgFit += popFits[x];// Add to average sum
-        if(popFits[bestIdx] < popFits[x]) bestIdx = x;// Get best population index
+        if(popFits[bestIdx] > popFits[x]) bestIdx = x;// Get best population index
     }
 
     // Report the best SDA from GA
