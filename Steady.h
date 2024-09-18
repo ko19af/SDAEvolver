@@ -14,19 +14,19 @@ using namespace std;
 class Steady {
     public:
         explicit Steady(ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
-        double CalcFitness(SDA &member, Topology T);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
+        double CalcFitness(SDA &member, Topology& T);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
 
     private:
-        double distanceFitness(Topology T);
-        double energyFitness(Topology T);
-        double dataFitness(Topology T);
+        double distanceFitness(Topology& T);
+        double energyFitness(Topology& T);
+        double dataFitness(Topology&T);
 
         int PrintPopFits(ostream &outStrm, vector<double> &popFits);
         bool CompareFitness(int popIdx1, int popIdx2);
         vector<int> TournSelect(int size, bool decreasing);
-        int MatingEvent(SDA *population, Topology T);
+        int MatingEvent(SDA *population, Topology& T);
         vector<double> popFits;
-        int Evolver(int SDANumStates = 100, int SDAOutputLen = 10, int numGenerations = 20, Topology T = Topology(5,5,1,1,5,true), ostream& MyFile = cout);
+        int Evolver(int SDANumStates, int SDAOutputLen, int numGenerations, Topology& T, ostream& MyFile);
         int PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population);
 
         int heurFunction = 0;

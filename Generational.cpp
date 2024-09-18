@@ -118,11 +118,11 @@ bool Generational::genCompareFitness(int popIdx1, int popIdx2) {
  * @return is the fitness values of the SDA when applied to the topology
  */
 
-double Generational::genCalcFitness(SDA &member, Topology T){
-
-    vector<int> c(genSDAResponseLength);// vector for holding response from SDA
+double Generational::genCalcFitness(SDA &member, Topology& T){
+    bool verbose = false;
+    vector<int> c(genSDAResponseLength); // vector for holding response from SDA
     member.fillOutput(c, false, cout);// fill vector using SDA
-    T.setConnections(c, false, false);//set the connections in the topology
+    T.setConnections(c, verbose, heurFunction);//set the connections in the topology
     switch(heurFunction){
         case 0:
         return distanceFitness(T);
@@ -155,7 +155,7 @@ double Generational::genCalcFitness(SDA &member, Topology T){
  * @return is the average amount of data being passed through the nodes in the network
  */
 
-double Generational::dataFitness(Topology T){
+double Generational::dataFitness(Topology& T){
     double val = 0.0;// is the fitness of the data being passed through the nodes in the topology
 
     for (int y = T.numENodes; y < T.tNumNodes; y++){// for each node that is not an edge node
@@ -173,7 +173,7 @@ double Generational::dataFitness(Topology T){
  * @return is the average distance all edge nodes are from a cloud node
  */
 
-double Generational::distanceFitness(Topology T){
+double Generational::distanceFitness(Topology& T){
     // Fitness function sums all distances an edge node uses to reach a cloud node through topology
     double val = 0;
     for (int x = 0; x < T.numENodes; x++){// for each edge node
@@ -201,7 +201,7 @@ double Generational::distanceFitness(Topology T){
  * @return is the average energy consumption per node in the network
  */
 
-double Generational::energyFitness(Topology T){
+double Generational::energyFitness(Topology& T){
     double val = 0.0;// is the fitness of the data being passed through the nodes in the topology
     for (double e : T.energyConsumption)val += e;// add up energy consumption in the network
     return val / (T.tNumNodes-T.numENodes);// return the averaged value for all the nodes in the network

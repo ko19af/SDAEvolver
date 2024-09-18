@@ -15,16 +15,16 @@ int main(int argc, char* argv[]) {
 
     int numStates = 6;
     int numChars = 2;
-    int popSize = 50;
+    int popSize = 250;
     int tournSelector = 3;
     int gaOperator = 1;
-    int numGen = 1000;
+    int numGen = 100000;
     int crossOp = 1;
     double crossRate = .1;
     int mutOperator = 1;
     double mutRate = 0.1;
     int runs = 30;
-    int heurFunction = 1;
+    int heurFunction = 2;
 
     //collect hyper-parameters for the run
     if(argc > 1){
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
        " crossOp: " << crossOp  << " crossRate(%): " << 
        setprecision(15) << crossRate << " mutationOperator: " <<
         mutOperator << " mutationRate(%):  " << setprecision(15) <<
-         mutRate <<  "Heurestic: " << heurFunction << " runs: " << runs << endl;
+         mutRate <<  " Heurestic: " << heurFunction << " runs: " << runs << endl;
 
     srand(1); // seed the random number generator
 
