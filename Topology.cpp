@@ -15,14 +15,16 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
     this->numENodes = starts;
     this->tNumNodes = numNodes + ends + starts; // calculate number of nodes in Topology
 
-    vector<vector<double>> trafficMatrix(tNumNodes, vector<double>(tNumNodes, 0.0));
-    this->trafficMatrix = trafficMatrix;
-
     EdgeTraffic(starts, 100);
     ChooseStart(x, starts);
     ChooseEnd(y, x, ends);
     ChooseNodeLocations(x, y, numNodes);
     if(verbose) PrintLayout();
+}
+
+double Topology::round(float var){
+    float value = (int)(var * 100 + .5);
+    return (double)value / 100;
 }
 
 /**
@@ -34,16 +36,15 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
  */
 
 void Topology::EnergyConsumption(double transmissionRate, double recevingRate){
-    vector<double> energyConsumption(tNumNodes-numENodes, 0.0);
+    energyConsumption.clear();
 
     for (int x = numENodes; x < tNumNodes; x++){// for each node
         double incomingData = 0.0;// calculate the total amount of data being transmitted from the node
         for (int d = 0; d < tNumNodes; d++){// get incoming traffic and distancec values
             incomingData += trafficMatrix[x][d] + distance[x][d];
         }
-        energyConsumption[x] = incomingData * transmissionRate;// multiply the number of MBps being transmitted by the energy consumption cost (0.03 W)
+        energyConsumption.push_back(round(incomingData * transmissionRate));// multiply the number of MBps being transmitted by the energy consumption cost (0.03 W)
     }
-    this->energyConsumption = energyConsumption;
 }
 
 /**
@@ -58,22 +59,19 @@ void Topology::EnergyConsumption(double transmissionRate, double recevingRate){
 
 void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
     
-    vector<vector<double>> data(tNumNodes);
+    this->data = vector<vector<double>>(tNumNodes);
     int dataStreams = 0;// variable to count the number of data streams
 
     for (int x = 0; x < numStarts; x++){//for each starting node
         double output = 0;// record how much data is being ouputed at the node
         while(output < maxOut){// while the ouput from the node is less than the max ouput
-            double d = (rand()/(double)RAND_MAX)*(upper-lower)+lower;// randomly generate a value in the packet size range
+            double d = round((rand()/(double)RAND_MAX)*(upper-lower)+lower);// randomly generate a value in the packet size range
             if(output + d > maxOut) break;// if ouput plus that value is greater than max output break out of loop
             data[x].push_back(d);// if max is not violated add that data to the list of streams eminating from the node
             output += d;// apped the data to the ouput value
             dataStreams++;// increment the number of datastreams that exist
         }
-        trafficMatrix[x][x] = output;// the ouput value in the traffic matrix for the start node
     }
-    this->data = data;// set local data vector as global data vector
-    this->dataStreams = dataStreams;// set local datastream variable as global data stream variable
 }
 
 /**
@@ -85,12 +83,13 @@ void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
 */
 
 void Topology::DistributeTraffic(){
+    this->trafficMatrix = vector<vector<double>> (tNumNodes, vector<double>(tNumNodes));
 
     for (int x = numENodes; x < tNumNodes; x++) data[x].clear(); // clear distribution from previous runs (except at edge nodes)
+    
 
     vector<int> toDo;// vector containing the nodes that have data to distribute
     vector<vector<double>> toDistribute(tNumNodes);// vector containing data to distribute at each node
-    vector<double> failed(dataStreams);// create vector to record datastreams that failed to reach target destination
 
     for(int x = 0; x < numENodes; x++){// for all the edge nodes
         toDo.push_back(x);// initialize vector with the edge nodes
@@ -112,7 +111,7 @@ void Topology::DistributeTraffic(){
                     if(layer[insert] < layer[x]){// prioritse sending data to higher layer nodes
                         insert = x;// sent insert to node that satisfys above parameters
                         best = trafficMatrix[node][x] + d;// set best as current data plus new data
-                    }else if(layer[insert] == layer[x]){
+                    }else if(layer[insert] == layer[x] && x >= numENodes){// send to equal layer node if it is not an edge node
                         insert = x;// sent insert to node that satisfys above parameters
                         best = trafficMatrix[node][x] + d;// set best as current data plus new data
                     }
@@ -121,9 +120,11 @@ void Topology::DistributeTraffic(){
 
             if(insert >= numENodes + numNodes){// if data is sent to a cloud node
                 trafficMatrix[node][insert] += d;// update traffic matrix with the new data transmitted between nodes
+                trafficMatrix[insert][node] += d;// update traffic matrix with the new data transmitted between nodes
                 data[insert].push_back(d);// record packet stream being sent/recived to node
             } else if (insert != node && insert < numENodes + numNodes){// data is sent to another node in network
                 trafficMatrix[node][insert] += d;
+                trafficMatrix[insert][node] += d;
                 data[insert].push_back(d);
                 toDistribute[insert].push_back(d);// add data to be distributed from node
                 if(count(toDo.begin(), toDo.end(), insert) < 1) toDo.push_back(insert);// add node to list of nodes that must distribute data (if not already added)
@@ -132,7 +133,6 @@ void Topology::DistributeTraffic(){
             }
         }
     }
-    this->failed = failed;// set local failed to global failed
 }
 
 /**
@@ -141,7 +141,7 @@ void Topology::DistributeTraffic(){
  */
 
 void Topology::LayerNodes(){
-    vector<int> layer(tNumNodes, -1);// vector to hold the queue order of the nodes
+    this->layer = vector<int>(tNumNodes, -1);// vector to hold the queue order of the nodes
     vector<int> checking;
     vector<int> toCheck;
 
@@ -166,8 +166,6 @@ void Topology::LayerNodes(){
             level--;// move to next level (as old level is finished)
         }
     }
-
-    this->layer = layer;// store layering
 }
 
 /** This method prints the resulting layout of the nodes in the network topology
@@ -324,20 +322,19 @@ void Topology::findNode(int &x, int &y, int node){
  */
 
 void Topology:: calculateDist(){
-    vector<vector<double>> d(tNumNodes, vector<double>(tNumNodes, 0.0));// vector for recording the distance
+    this->distance = vector<vector<double>>(tNumNodes, vector<double>(tNumNodes)); // vector for recording the distance
     for (int y = 0; y < tNumNodes; y++){// go through the rows
         for (int x = 0; x < y; x++){// go through the columns
-            if(connections[y][x] == 1 && d[y][x] <= 0){// if there is a connection and distance was not calculated
+            if(connections[y][x] == 1 && distance[y][x] <= 0){// if there is a connection and distance was not calculated
                 int x1, x2, y1, y2;// variables holding x and y co-ordinates of the nodes
                 findNode(x1, y1, y + 1); // find x and y co-ordinate of node we are at
                 findNode(x2, y2, x + 1); // find x and y co-ordinate of node we wish to calculate distance to
                 double dist = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)); // caluclate euclidean distance
-                d[y][x] = dist;
-                d[x][y] = dist;
+                distance[y][x] = dist;
+                distance[x][y] = dist;
             }
         }
     }
-    this->distance = d;// store distance
 }
 
 /**
@@ -347,8 +344,8 @@ void Topology:: calculateDist(){
  * @param c is the vector produced by the SDA detainling the connections present in the network
 */
 
-void Topology::setConnections(vector<int> c, bool verbose, int heurFunction){
-    vector<vector<int>> connections(tNumNodes, vector<int>(tNumNodes, 0));
+void Topology::setConnections(vector<int>& c, bool verbose, int& heurFunction){
+    this->connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));
     this->numConnections = 0;
     int pos = 0; // keep track of position in SDA connection vector
 
@@ -366,13 +363,15 @@ void Topology::setConnections(vector<int> c, bool verbose, int heurFunction){
         }
     }
 
-    this->connections = connections;// set the connection defined by the vector as the connections for the topology
-
     if(heurFunction == 0) calculateDist();// calculate the distance bettwen the nodes
-    else if(heurFunction > 0){
+    else if (heurFunction == 1){// calculate the throughput of the nodes
+        LayerNodes();
+        DistributeTraffic();
+    }else{
         calculateDist();
         LayerNodes();
         DistributeTraffic();
+        EnergyConsumption();
     }
     if(verbose && heurFunction > 0){
         printConnections();

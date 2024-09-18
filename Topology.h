@@ -13,7 +13,7 @@ class Topology {
 public:
     explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = true);
     int ShortestPath(int position, vector<double> &sPath);
-    void setConnections(vector<int> c, bool verbose = false, int heurFunction = 0);
+    void setConnections(vector<int>& c, bool verbose, int& heurFunction);
 
     /**
      * The layout of the network that the program will attempt to find the optimal configuration for
@@ -48,6 +48,7 @@ private:
     int ChooseStart(int x, int numStarts);
     int ChooseEnd(int y, int x, int numEnds);
     void EnergyConsumption(double transmissionRate = 0.03, double recevingRate = 0.03);
+    double round(float var);
 };
 
 #endif // Topology_H
