@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm> 
 #include <cmath>
+#include <string>
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -12,6 +13,7 @@ using namespace std;
 class Topology {
 public:
     explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = true);
+    explicit Topology(string& fileName, bool verbose = false);
     int ShortestPath(int position, vector<double> &sPath);
     void setConnections(vector<int>& c, bool verbose, int& heurFunction);
 
@@ -19,7 +21,7 @@ public:
      * The layout of the network that the program will attempt to find the optimal configuration for
      */
 
-    vector<vector<bool>> network;
+    vector<vector<int>> network;
     vector<vector<int>> connections;
     vector<int> layer;
     vector<double> energyConsumption;
@@ -36,6 +38,7 @@ public:
     bool analyzeData;
 
 private:
+    void readLayout(string& fileName);
     void calculateDist();
     void PrintLayout();
     void printConnections();

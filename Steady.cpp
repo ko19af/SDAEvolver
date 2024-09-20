@@ -39,11 +39,22 @@ int Steady::MatingEvent(SDA* population, Topology& T){
 }
 
 /**
+ * A funct class designed to perform the fitness comparison for organizing the tournament indexes based on fitness
+ */
+class CompareFitness{
+private:
+    vector<double>& popFits;
+public:
+    CompareFitness(vector<double>& popFit) : popFits(popFit) {  }
+ 
+    // operator function () on objects to compare their size and return boolean
+    int operator () (int popIdx1, int popIdx2) const {return (popFits[popIdx1] > popFits[popIdx2]);}
+};
+
+/**
  * Performs a tournament selection deciding which members from the population, of the
  * current generation, will undergo a mating event to produce the children that will
  * populate the new population for the next generation
- *
- * KEVINDO: Update to work with Steady
  *
  * @param size of the returned vector of indicies from the tournament selection
  * @param decreasing is a boolean determining the ordering of the indicies in the returned vector based on their fitness
@@ -64,38 +75,17 @@ vector<int> Steady::TournSelect(int size, bool decreasing) {
             idxToAdd = (int) lrand48() % popSize;
             // If this index is not already in tournIdxs
             if (count(tournIdxs.begin(), tournIdxs.end(), idxToAdd) == 0) {
-                // Then add it
-                tournIdxs.push_back(idxToAdd);
+                tournIdxs.push_back(idxToAdd);// Then add it
             }
         } while (tournIdxs.size() < size);
     }
+
+    sort(tournIdxs.begin(), tournIdxs.end(), CompareFitness(popFits));
+    if (decreasing) reverse(tournIdxs.begin(), tournIdxs.end());
     
-    //sort(tournIdxs.begin(), tournIdxs.end(), CompareFitness);
-    sort(tournIdxs.begin(), tournIdxs.end());
-    if (decreasing) {
-        reverse(tournIdxs.begin(), tournIdxs.end());
-    }
     return tournIdxs;
 }
 
-/**
- * This method compares the fitness of two members of the population and returns a boolean determining
- * which member had the greatest fitness
- *
- * @param popIdx1 an index representing a member of the population
- * @param popIdx2 a second index representing a member of the population whos fitness is being compared to the previous member
- * @return a boolean determing which member had the greatest fitness
- */
-bool Steady::CompareFitness(int popIdx1, int popIdx2) {
-    if (popFits[popIdx1] < popFits[popIdx2]) {
-        return true;
-    }
-    if (popFits[popIdx1] > popFits[popIdx2]) {
-        return false;
-    }
-    cout << "ERROR: compare fitness not working as intended!" << endl;
-    return false;
-}
 
 double Steady::CalcFitness(SDA &member, Topology& T){
 
@@ -263,7 +253,7 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Top
     return 0;
 }
 
-Steady::Steady(ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){
+Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){
 
     this->SDANumChars = numChars;
     this->popSize = popSize;
@@ -274,15 +264,6 @@ Steady::Steady(ofstream& MyFile, int numStates, int numChars, int popSize, int t
     this->tournSize = tournSize;
 
     this->heurFunction = heurFunction;
-
-   // define parameters for Topology
-    this->numColoumns = 10;
-    this->numRows = 10;
-    this->numStarts = 1;
-    this->numEnds = 1;
-    this->numNodes = 30;
-
-    Topology T = Topology(numColoumns, numRows, numStarts, numEnds, numNodes, false);// initialize the topology object
 
     int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
     this->maxConnections = outputLen;

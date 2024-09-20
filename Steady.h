@@ -13,7 +13,7 @@ using namespace std;
 
 class Steady {
     public:
-        explicit Steady(ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
+        explicit Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
         double CalcFitness(SDA &member, Topology& T);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
 
     private:
@@ -22,7 +22,6 @@ class Steady {
         double dataFitness(Topology&T);
 
         int PrintPopFits(ostream &outStrm, vector<double> &popFits);
-        bool CompareFitness(int popIdx1, int popIdx2);
         vector<int> TournSelect(int size, bool decreasing);
         int MatingEvent(SDA *population, Topology& T);
         vector<double> popFits;
@@ -37,18 +36,13 @@ class Steady {
         int tournCandidates = 4;
         int tournMaxRepeats = 10;
         int elitism = 2;
-        bool lowerBetter = false;
+        bool lowerBetter = true;
         double mutationRate = 0.1;
         int numGenerations = 100;
         int numMutations = 1;
         int mutOperator = 1;
         int crossOp = 1;
         double crossRate = 0.5;
-        int numColoumns = 5;
-        int numRows = 5;
-        int numStarts = 1;
-        int numEnds = 1;
-        int numNodes = 3;
         int maxConnections;
 };
 

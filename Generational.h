@@ -14,7 +14,7 @@ using namespace std;
 class Generational {
 
     public:
-        explicit Generational(ostream& MyFile, int numStates, int numChars, int popSize, int tournSelector, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
+        explicit Generational(Topology& T, ostream& MyFile, int numStates, int numChars, int popSize, int tournSelector, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
         double genCalcFitness(SDA &member, Topology& T);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
         
 
@@ -32,7 +32,6 @@ class Generational {
         vector<double> genPopFits;
         vector<double> genNewPopFits;
         int heurFunction = 0;
-        int maxConnections = 100000;
         int genSDANumChars = 2;
         int genSDAResponseLength = 2;
         int genPopSize = 100;
@@ -47,11 +46,7 @@ class Generational {
         int genMutOperator = 1;
         int genCrossOp = 1;
         double genCrossRate = 0.5;
-        int numColoumns = 5;
-        int numRows = 5;
-        int numStarts = 1;
-        int numEnds = 1;
-        int numNodes = 3;
+        int maxConnections;
 };
 
 #endif // Topology_H

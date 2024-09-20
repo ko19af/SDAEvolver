@@ -7,7 +7,7 @@
 
 Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbose){
     
-    vector<vector<bool>> network(y, vector<bool>(x, false));
+    vector<vector<int>> network(y, vector<int>(x, false));
     
     this->network = network;
     this->numNodes = numNodes;
@@ -20,6 +20,32 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
     ChooseEnd(y, x, ends);
     ChooseNodeLocations(x, y, numNodes);
     if(verbose) PrintLayout();
+}
+
+Topology::Topology(string& fileName, bool verbose){
+    readLayout(fileName);
+    if (verbose) PrintLayout();
+}
+
+/**
+ * This method read a provided network layout and reads it into the program
+ * 
+ * @param fileName is the name of the file being read into the system
+ */
+
+void Topology::readLayout(string& fileName){
+    vector<vector<int>> network;
+    vector<int> row;
+    string text;
+    ifstream ReadFile(fileName);
+    
+    while (getline (ReadFile, text, '\n')){
+        stringstream ss(text);// create string stream with text delimited by newline character
+        while (getline(ss, text, '\t')) row.push_back(stoi(text));
+        network.push_back(row);
+        row.clear();
+    }
+    ReadFile.close();
 }
 
 double Topology::round(float var){
@@ -36,7 +62,7 @@ double Topology::round(float var){
  */
 
 void Topology::EnergyConsumption(double transmissionRate, double recevingRate){
-    energyConsumption.clear();
+    energyConsumption.clear();// clear the old energy consumption values
 
     for (int x = numENodes; x < tNumNodes; x++){// for each node
         double incomingData = 0.0;// calculate the total amount of data being transmitted from the node
@@ -228,8 +254,8 @@ int Topology::ChooseStart(int x, int numStarts){
         int start;
         do{
             start = rand() % x; // randomly choose the data starting position in the network
-        } while (network[0][start] == true);
-        network[0][start] = true;
+        } while (network[0][start] == 1);
+        network[0][start] = 1;
     }
     return 0;
 }
@@ -248,8 +274,8 @@ int Topology::ChooseEnd(int y, int x, int numEnds){
         int end;
         do{
             end = rand() % x; // randomly choose the data starting position in the network
-        } while (network[y-1][end] == true); // if position was already choosen choose another
-        network[y-1][end] = true;
+        } while (network[y-1][end] == 1); // if position was already choosen choose another
+        network[y-1][end] = 1;
     }
     return 0;
 }
@@ -269,8 +295,8 @@ void Topology::ChooseNodeLocations(int x, int y, int numNodes){
         do{
             row = 1 + rand() % (y-2); // randomly choose row between 1-8 to insert node
             column = rand() % x;// randomly choose column to insert node
-        } while (network[row][column] == true); // if position is already choosen choose another
-        network[row][column] = true;
+        } while (network[row][column] == 1); // if position is already choosen choose another
+        network[row][column] = 1;
     }
 }
 

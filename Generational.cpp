@@ -286,7 +286,7 @@ int Generational::genEvolver(int SDANumStates, int SDAOutputLen, int numGenerati
     return 0;
 }
 
-Generational::Generational(ostream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction) {
+Generational::Generational(Topology& T, ostream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction) {
     
     this->genSDANumChars = numChars;
     this->genPopSize = popSize;
@@ -296,15 +296,6 @@ Generational::Generational(ostream& MyFile, int numStates, int numChars, int pop
     this->genMutOperator = mutOperator;
     this->genMutationRate = mutRate;
     this->heurFunction = heurFunction;
-
-    // define parameters for Topology
-    this->numColoumns = 10;
-    this->numRows = 10;
-    this->numStarts = 1;
-    this->numEnds = 1;
-    this->numNodes = 30;
-
-    Topology T = Topology(numColoumns, numRows, numStarts, numEnds, numNodes, false);// initialize the topology object
 
     int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;// calculate the required ouput from the SDA
     this->maxConnections = outputLen;

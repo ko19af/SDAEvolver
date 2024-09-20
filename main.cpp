@@ -4,10 +4,12 @@
 #include <bits/stdc++.h>
 #include <iomanip> 
 #include <limits>
+#include <filesystem>
 #include "SDA.h"
 #include "Topology.h"
 #include "Generational.h"
 #include "Steady.h"
+#include "vector"
 
 using namespace std;
 
@@ -18,13 +20,13 @@ int main(int argc, char* argv[]) {
     int popSize = 250;
     int tournSelector = 3;
     int gaOperator = 1;
-    int numGen = 100000;
+    int numGen = 1000;
     int crossOp = 1;
     double crossRate = .1;
     int mutOperator = 1;
     double mutRate = 0.1;
     int runs = 30;
-    int heurFunction = 2;
+    int heurFunction = 0;
 
     //collect hyper-parameters for the run
     if(argc > 1){
@@ -42,6 +44,12 @@ int main(int argc, char* argv[]) {
     heurFunction = atoi(argv[12]);
     }
 
+    srand(1); // seed the random number generator
+
+    string path = "Topologies/Layout_0.txt";
+    
+    Topology T = Topology(path, false); // initialize the topology
+
     string fileName = "Output/Experiment_" + to_string(numStates) + to_string(numChars) + 
     to_string(popSize) + to_string(tournSelector) + to_string(gaOperator) + 
     to_string(numGen) + to_string(crossOp) + to_string(crossRate) + 
@@ -57,12 +65,10 @@ int main(int argc, char* argv[]) {
         mutOperator << " mutationRate(%):  " << setprecision(15) <<
          mutRate <<  " Heurestic: " << heurFunction << " runs: " << runs << endl;
 
-    srand(1); // seed the random number generator
-
     for (int x = 0; x < runs; x++){
         MyFile << "Run: " << x + 1 << endl;
-        if(gaOperator == 0) Generational(MyFile, numStates, numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
-        else if(gaOperator == 1) Steady(MyFile, numStates,numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
+        if(gaOperator == 0) Generational(T, MyFile, numStates, numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
+        else if(gaOperator == 1) Steady(T, MyFile, numStates,numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
     }
     MyFile.close();
     return 0;
