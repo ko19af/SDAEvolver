@@ -23,7 +23,28 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
 }
 
 Topology::Topology(string& fileName, bool verbose){
+    
     readLayout(fileName);
+    
+    int eNodes = 0;
+    int cNodes = 0;
+    int nNodes = 0;
+
+    for (int n : network[0]) if (n != 0) eNodes++;
+    for(int n : network[network.size()-1]) if(n !=0 ) cNodes++;
+    for (int y = 1; y < network.size() - 2; y++){
+        for (int x = 0; x < network[0].size(); x++){
+            if(network[y][x] != 0) nNodes++;
+        }
+    }
+
+    EdgeTraffic(eNodes, 100);
+
+    this->numENodes = eNodes;
+    this->numCNodes = cNodes;
+    this->numNodes = nNodes;
+    this->tNumNodes = nNodes + cNodes + eNodes; // calculate number of nodes in Topology
+
     if (verbose) PrintLayout();
 }
 
@@ -46,6 +67,7 @@ void Topology::readLayout(string& fileName){
         row.clear();
     }
     ReadFile.close();
+    this->network = network;
 }
 
 double Topology::round(float var){

@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     int mutOperator = 1;
     double mutRate = 0.1;
     int runs = 30;
-    int heurFunction = 0;
+    int heurFunction = 1;
 
     //collect hyper-parameters for the run
     if(argc > 1){
@@ -46,30 +46,32 @@ int main(int argc, char* argv[]) {
 
     srand(1); // seed the random number generator
 
-    string path = "Topologies/Layout_0.txt";
+    for (int x = 0; x < 5; x++){
+        string path = "Topologies/Layout_"+to_string(x)+".txt";
     
-    Topology T = Topology(path, false); // initialize the topology
+        Topology T = Topology(path, false); // initialize the topology
 
-    string fileName = "Output/Experiment_" + to_string(numStates) + to_string(numChars) + 
-    to_string(popSize) + to_string(tournSelector) + to_string(gaOperator) + 
-    to_string(numGen) + to_string(crossOp) + to_string(crossRate) + 
-    to_string(mutOperator) + to_string(mutRate) + to_string(runs) + to_string(heurFunction) + ".txt";
+        string fileName = "Output/Experiment_" + to_string(numStates) + to_string(numChars) + 
+        to_string(popSize) + to_string(tournSelector) + to_string(gaOperator) + 
+        to_string(numGen) + to_string(crossOp) + to_string(crossRate) + 
+        to_string(mutOperator) + to_string(mutRate) + to_string(runs) + to_string(heurFunction) + to_string(x) + ".txt";
 
-    ofstream MyFile(fileName);
+        ofstream MyFile(fileName);
 
-    MyFile << "# States: " << numStates << " # Chars: " << numChars <<
-     " popSize: " << popSize << " tournSelector " << tournSelector <<
-      " gaOperator: " << gaOperator << " numGen: " << numGen <<
-       " crossOp: " << crossOp  << " crossRate(%): " << 
-       setprecision(15) << crossRate << " mutationOperator: " <<
-        mutOperator << " mutationRate(%):  " << setprecision(15) <<
-         mutRate <<  " Heurestic: " << heurFunction << " runs: " << runs << endl;
+        MyFile << "# States: " << numStates << " # Chars: " << numChars <<
+        " popSize: " << popSize << " tournSelector " << tournSelector <<
+        " gaOperator: " << gaOperator << " numGen: " << numGen <<
+        " crossOp: " << crossOp  << " crossRate(%): " << 
+        setprecision(15) << crossRate << " mutationOperator: " <<
+            mutOperator << " mutationRate(%):  " << setprecision(15) <<
+            mutRate <<  " Heurestic: " << heurFunction << " Topology: " << x << " runs: " << runs << endl;
 
-    for (int x = 0; x < runs; x++){
-        MyFile << "Run: " << x + 1 << endl;
-        if(gaOperator == 0) Generational(T, MyFile, numStates, numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
-        else if(gaOperator == 1) Steady(T, MyFile, numStates,numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
+        for (int x = 0; x < runs; x++){
+            MyFile << "Run: " << x + 1 << endl;
+            if(gaOperator == 0) Generational(T, MyFile, numStates, numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
+            else if(gaOperator == 1) Steady(T, MyFile, numStates,numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
+        }
+        MyFile.close();
     }
-    MyFile.close();
     return 0;
 }
