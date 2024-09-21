@@ -14,12 +14,14 @@ using namespace std;
 class Steady {
     public:
         explicit Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
-        double CalcFitness(SDA &member, Topology& T);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
+        double CalcFitness(SDA &member, Topology& T, int idx);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
 
     private:
         double distanceFitness(Topology& T);
         double energyFitness(Topology& T);
         double dataFitness(Topology&T);
+        bool necroticFilter(vector<int>& connections, Topology& T);
+        vector<bool> dead;
 
         int PrintPopFits(ostream &outStrm, vector<double> &popFits);
         vector<int> TournSelect(int size, bool decreasing);
@@ -28,6 +30,9 @@ class Steady {
         int Evolver(int SDANumStates, int SDAOutputLen, int numGenerations, Topology& T, ostream& MyFile);
         int PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population);
 
+        void worst(bool min);
+
+        double popWorstFit;
         int heurFunction = 0;
         int SDANumChars = 2;
         int SDAResponseLength = 2;

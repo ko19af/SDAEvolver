@@ -34,7 +34,6 @@ public:
     int numENodes;// number of edge/fog nodes present in the network
     int tNumNodes; // variable representing total number of nodes in the network
     int dataStreams;
-    int numConnections;
     bool analyzeData;
 
 private:

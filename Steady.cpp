@@ -3,7 +3,7 @@
 /**
  * Performs a single mating event in the population by performing tournament selection,
  * crossover on copies of the two most-fit members of the tournament, and mutation of these
- * copies.  Afterwards, the two least-fit members of the tournament are replaced with
+ * copies. Afterwards, the two least-fit members of the tournament are replaced with
  * the mutated children.
  *
  * @param population the population undergoing evolution
@@ -32,8 +32,8 @@ int Steady::MatingEvent(SDA* population, Topology& T){
     population[tournIdxs[tournSize - 2]] = child2;
 
     // Update fitness of worst two members of the tournament
-    popFits[tournIdxs[tournSize-1]] = CalcFitness(child1, T);
-    popFits[tournIdxs[tournSize-2]] = CalcFitness(child2, T);
+    popFits[tournIdxs[tournSize-1]] = CalcFitness(child1, T, tournIdxs[tournSize-1]);
+    popFits[tournIdxs[tournSize-2]] = CalcFitness(child2, T, tournIdxs[tournSize-2]);
 
     return 0;
 }
@@ -87,14 +87,19 @@ vector<int> Steady::TournSelect(int size, bool decreasing) {
 }
 
 
-double Steady::CalcFitness(SDA &member, Topology& T){
-
+double Steady::CalcFitness(SDA &member, Topology& T, int idx){
     vector<int> c; // vector for holding response from SDA
-    c.reserve(SDAResponseLength);                         
+    c.reserve(SDAResponseLength);
     member.fillOutput(c, false, cout);// fill vector using SDA
+    
+    if(necroticFilter(c, T)){// check if the member is necrotic
+        dead[idx] = true;// set dead value of the member to true
+        return popWorstFit;// set the memebers fitness value to the populations current worst fitness
+    }                      
+
     T.setConnections(c, false, heurFunction);//set the connections in the topology
     
-    switch (heurFunction)
+    switch (heurFunction)// switch function determing which heurestic function is being used for evaluation
     {
     case 0:
         return distanceFitness(T);
@@ -118,6 +123,22 @@ double Steady::CalcFitness(SDA &member, Topology& T){
             return distanceFitness(T) + dataFitness(T) + energyFitness(T);
         }
         return 0.0;
+}
+
+/**
+ * This method determines if a member of the population is necrotic
+ * by checking the number of connections present in its output
+ * 
+ * @param connections is the vector containing the connections from the member being examined
+ * @param T is the Topology being examined
+ */
+
+bool Steady::necroticFilter(vector<int>& connections, Topology& T){
+    int count = 0;// variable counting the number of connections in the member
+    int bounds[2] = {1 * T.tNumNodes, 5 * T.tNumNodes};// array defing the bounds the member must satisfy
+    for (int val: connections) count++;// coun the number of connections in the members output
+    if (count < bounds[0] || count > bounds[1])  return true; // DEAD
+    else return false;// return false if member is within bounds
 }
 
 /**
@@ -175,22 +196,37 @@ double Steady::distanceFitness(Topology& T){
 
 double Steady::energyFitness(Topology& T){
     double val = 0.0;// is the fitness of the data being passed through the nodes in the topology
-    for (double e : T.energyConsumption)val += e;// add up energy consumption in the network
+    for (double e : T.energyConsumption) val += e;// add up energy consumption in the network
     return val / (T.tNumNodes-T.numENodes);// return the averaged value for all the nodes in the network
 }
+
+/**
+ * This method prints the fitness values of the population and determines which member has the worst fitness
+ * and assigns that fitness to the dead memebers of the population
+ * 
+ * @param outStrm is where the program is prinitng out the  information
+ * @param popFits is the vector holding the fitness of the population
+ */
 
 int Steady::PrintPopFits(ostream &outStrm, vector<double> &popFits) {
     outStrm << "Fitness Values: ";
     bool first = true;
-    for (double fit: popFits) {
-        // This ensures commas after each fitness value other than the last
-        if (!first) {
-            outStrm << ", ";
+
+    worst(true);// find worst value in the population
+
+    for (int fit = 0; fit < popFits.size(); fit++){// for each entry in the popFits vector
+       
+        if(dead[fit]){// if member of population is dead
+            popFits[fit] = popWorstFit;// set its fitness value to the worst value
+            continue;// don't print ???????????????????????????????????????????????
         }
-        outStrm << fit;
-        first = false;
+
+        // This ensures commas after each fitness value other than the last
+        if (!first) outStrm << ", ";
+        outStrm << popFits[fit];// print out the fitness of the member
+        first = false;// set first to false as to start prinintg commas after first
     }
-    outStrm << "\n";
+    outStrm << "\n";// print new line character after printing population
     return 0;
 }
 
@@ -228,21 +264,27 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Top
     SDA* population;
     population = new SDA[popSize];
     popFits.reserve(popSize);
+    dead.reserve(popSize);
     int modVal = numMatingEvents / 10;
 
     // Step 1: initialize the population
     for (int i = 0; i < popSize; ++i) {
-        population[i] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAOutputLen);// create a new SDA
-        popFits.push_back(CalcFitness(population[i], T));
+        vector<int> SDAOutput; // vector for holding response from SDA
+        SDAOutput.reserve(SDAResponseLength);
+        do{
+            population[i] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAOutputLen); // create a new SDA
+            population[i].fillOutput(SDAOutput, false, cout);// fill vector using SDA
+        } while(necroticFilter(SDAOutput, T));// while the member is necrotic
+        popFits.push_back(CalcFitness(population[i], T, i));// calculate the fitness of the member
+        dead.push_back(false);// set dead status as false
     }
 
     MyFile << "Initial Pop Fitness values: " << endl;
-    PrintPopFits(MyFile, popFits);
 
     // Step 2: Evolution
     for (int gen = 0; gen < numMatingEvents; ++gen) {
-        MatingEvent(population, T);
-        if(gen % modVal == 0) PrintPopFits(MyFile, popFits);// print every 10th generation
+        if(gen % modVal == 0) PrintPopFits(MyFile, popFits);// print the initial pop value and pop value every 10th generation
+        MatingEvent(population, T);// perform mating event
     }
 
     // Step 3: Reporting
@@ -251,6 +293,25 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Top
 
     delete[] population;
     return 0;
+}
+
+/**
+ * This method goes through the population and determines which fitness value is the worst
+ * based on the param passed into the method
+ * 
+ * @param min decides if the worst value is the max value or min value in the population
+ */
+
+void Steady::worst(bool min){
+    if (min) { // if minimizing the worst value is the largest fitness
+        for (double val: popFits) {// go through the populations fitness
+            if (val > popWorstFit) popWorstFit = val;// if worst value found set it to worst value
+        }
+    }else{ // if maximizing the worst value is the smallest fitness
+        for (double val: popFits) {
+            if (val < popWorstFit) popWorstFit = val;
+        }
+    }
 }
 
 Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){
