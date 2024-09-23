@@ -19,7 +19,7 @@ class Steady {
     private:
         double distanceFitness(Topology& T);
         double energyFitness(Topology& T);
-        double dataFitness(Topology&T);
+        double dataFitness(Topology& T);
         bool necroticFilter(vector<int>& connections, Topology& T);
         vector<bool> dead;
 
@@ -27,12 +27,12 @@ class Steady {
         vector<int> TournSelect(int size, bool decreasing);
         int MatingEvent(SDA *population, Topology& T);
         vector<double> popFits;
-        int Evolver(int SDANumStates, int SDAOutputLen, int numGenerations, Topology& T, ostream& MyFile);
+        int Evolver(int SDANumStates, int numGenerations, Topology& T, ostream& MyFile);
         int PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population);
 
         void worst(bool min);
 
-        double popWorstFit;
+        double popWorstFit = 0;
         int heurFunction = 0;
         int SDANumChars = 2;
         int SDAResponseLength = 2;
@@ -48,7 +48,6 @@ class Steady {
         int mutOperator = 1;
         int crossOp = 1;
         double crossRate = 0.5;
-        int maxConnections;
 };
 
 #endif // Topology_H

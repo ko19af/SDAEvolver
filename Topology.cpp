@@ -38,12 +38,12 @@ Topology::Topology(string& fileName, bool verbose){
         }
     }
 
-    EdgeTraffic(eNodes, 100);
-
     this->numENodes = eNodes;
     this->numCNodes = cNodes;
     this->numNodes = nNodes;
     this->tNumNodes = nNodes + cNodes + eNodes; // calculate number of nodes in Topology
+
+    EdgeTraffic(eNodes, 100);
 
     if (verbose) PrintLayout();
 }
@@ -394,7 +394,6 @@ void Topology:: calculateDist(){
 
 void Topology::setConnections(vector<int>& c, bool verbose, int& heurFunction){
     this->connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));
-    int pos = 0; // keep track of position in SDA connection vector
 
     for (int y = 0; y < connections.size(); y++){// fill the connection matrix
         for (int x = 0; x < y; x++){
@@ -402,10 +401,10 @@ void Topology::setConnections(vector<int>& c, bool verbose, int& heurFunction){
                 connections[y][x] = 0;
                 connections[x][y] = 0;
             }else{// set connection based on vector given from SDA
-                connections[y][x] = c[pos];
-                connections[x][y] = c[pos];
+                connections[y][x] = c[0];
+                connections[x][y] = c[0];
             }
-            pos++; // increment position in SDA connection vector
+            c.erase(c.begin()); // remove node from checking
         }
     }
 

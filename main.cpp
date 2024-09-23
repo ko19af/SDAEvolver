@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 
     int numStates = 6;
     int numChars = 2;
-    int popSize = 250;
+    int popSize = 100;
     int tournSelector = 3;
     int gaOperator = 1;
     int numGen = 1000;
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     int mutOperator = 1;
     double mutRate = 0.1;
     int runs = 30;
-    int heurFunction = 1;
+    int heurFunction = 2;
 
     //collect hyper-parameters for the run
     if(argc > 1){
@@ -46,17 +46,17 @@ int main(int argc, char* argv[]) {
 
     srand(1); // seed the random number generator
 
-    for (int x = 0; x < 5; x++){
-        string path = "Topologies/Layout_"+to_string(x)+".txt";
+    for (int t = 0; t < 5; t++){
+        
+        string path = "Topologies/Layout_"+to_string(t)+".txt";
     
         Topology T = Topology(path, false); // initialize the topology
 
-        string fileName = "Output/Experiment_" + to_string(numStates) + to_string(numChars) + 
+        ofstream MyFile("Output/Experiment_" + to_string(numStates) + to_string(numChars) + 
         to_string(popSize) + to_string(tournSelector) + to_string(gaOperator) + 
         to_string(numGen) + to_string(crossOp) + to_string(crossRate) + 
-        to_string(mutOperator) + to_string(mutRate) + to_string(runs) + to_string(heurFunction) + to_string(x) + ".txt";
-
-        ofstream MyFile(fileName);
+        to_string(mutOperator) + to_string(mutRate) + to_string(runs) + 
+        to_string(heurFunction) + to_string(t) + ".txt");
 
         MyFile << "# States: " << numStates << " # Chars: " << numChars <<
         " popSize: " << popSize << " tournSelector " << tournSelector <<
@@ -64,7 +64,9 @@ int main(int argc, char* argv[]) {
         " crossOp: " << crossOp  << " crossRate(%): " << 
         setprecision(15) << crossRate << " mutationOperator: " <<
             mutOperator << " mutationRate(%):  " << setprecision(15) <<
-            mutRate <<  " Heurestic: " << heurFunction << " Topology: " << x << " runs: " << runs << endl;
+            mutRate <<  " Heurestic: " << heurFunction << " Topology: " << t << " runs: " << runs << endl;
+
+        MyFile << "Topology: " << t + 1 << endl;
 
         for (int x = 0; x < runs; x++){
             MyFile << "Run: " << x + 1 << endl;

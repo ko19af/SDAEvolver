@@ -31,10 +31,28 @@ int Steady::MatingEvent(SDA* population, Topology& T){
     population[tournIdxs[tournSize - 1]] = child1;
     population[tournIdxs[tournSize - 2]] = child2;
 
-    // Update fitness of worst two members of the tournament
-    popFits[tournIdxs[tournSize-1]] = CalcFitness(child1, T, tournIdxs[tournSize-1]);
-    popFits[tournIdxs[tournSize-2]] = CalcFitness(child2, T, tournIdxs[tournSize-2]);
+    vector<int> c(SDAResponseLength, 0); // vector for holding response from SDA
+    child1.fillOutput(c, false, cout);// fill vector using SDA of first child
+    
+    // Update fitness of worst two members of the tournament and set members dead status taking into account if they are dead
+    if(necroticFilter(c, T)){// if member is dead
+        popFits[tournIdxs[tournSize - 1]] = popWorstFit;// set childs fitness to worst fitness value
+        dead[tournIdxs[tournSize - 1]] = true;// set its status as dead
+    }
+    else{// if member is not dead
+        popFits[tournIdxs[tournSize - 1]] = CalcFitness(child1, T, tournIdxs[tournSize - 1]);// calculate members fitness
+        dead[tournIdxs[tournSize - 1]] = false;// set its status as not dead
+    }
 
+    child2.fillOutput(c, false, cout);// fill vector using SDA of second child
+
+    if(necroticFilter(c, T)){// repeat above process for second child
+        popFits[tournIdxs[tournSize - 2]] = popWorstFit;
+        dead[tournIdxs[tournSize - 2]] = true;
+    }else{
+        popFits[tournIdxs[tournSize-2]] = CalcFitness(child2, T, tournIdxs[tournSize-2]);
+        dead[tournIdxs[tournSize - 2]] = false; 
+    }
     return 0;
 }
 
@@ -88,8 +106,7 @@ vector<int> Steady::TournSelect(int size, bool decreasing) {
 
 
 double Steady::CalcFitness(SDA &member, Topology& T, int idx){
-    vector<int> c; // vector for holding response from SDA
-    c.reserve(SDAResponseLength);
+    vector<int> c(SDAResponseLength, 0); // vector for holding response from SDA
     member.fillOutput(c, false, cout);// fill vector using SDA
     
     if(necroticFilter(c, T)){// check if the member is necrotic
@@ -135,9 +152,10 @@ double Steady::CalcFitness(SDA &member, Topology& T, int idx){
 
 bool Steady::necroticFilter(vector<int>& connections, Topology& T){
     int count = 0;// variable counting the number of connections in the member
-    int bounds[2] = {1 * T.tNumNodes, 5 * T.tNumNodes};// array defing the bounds the member must satisfy
-    for (int val: connections) count++;// coun the number of connections in the members output
-    if (count < bounds[0] || count > bounds[1])  return true; // DEAD
+    
+    for (int val: connections) if(val == 1) count++;// count the number of connections in the members output
+    
+    if (count < 1 * T.tNumNodes || count > 7 * T.tNumNodes)  return true; // DEAD
     else return false;// return false if member is within bounds
 }
 
@@ -260,22 +278,19 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
     return 0;
 }
 
-int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Topology& T, ostream& MyFile){
+int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream& MyFile){
     SDA* population;
     population = new SDA[popSize];
-    popFits.reserve(popSize);
-    dead.reserve(popSize);
-    int modVal = numMatingEvents / 10;
 
     // Step 1: initialize the population
     for (int i = 0; i < popSize; ++i) {
-        vector<int> SDAOutput; // vector for holding response from SDA
-        SDAOutput.reserve(SDAResponseLength);
+        vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
         do{
-            population[i] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAOutputLen); // create a new SDA
+            population[i] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAResponseLength); // create a new SDA
             population[i].fillOutput(SDAOutput, false, cout);// fill vector using SDA
         } while(necroticFilter(SDAOutput, T));// while the member is necrotic
-        popFits.push_back(CalcFitness(population[i], T, i));// calculate the fitness of the member
+        SDAOutput.clear();
+        popFits.push_back(CalcFitness(population[i], T, i)); // calculate the fitness of the member
         dead.push_back(false);// set dead status as false
     }
 
@@ -283,7 +298,7 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Top
 
     // Step 2: Evolution
     for (int gen = 0; gen < numMatingEvents; ++gen) {
-        if(gen % modVal == 0) PrintPopFits(MyFile, popFits);// print the initial pop value and pop value every 10th generation
+        if(gen % (numMatingEvents / 10) == 0) PrintPopFits(MyFile, popFits);// print the initial pop value and pop value every 10th generation
         MatingEvent(population, T);// perform mating event
     }
 
@@ -303,12 +318,15 @@ int Steady::Evolver(int SDANumStates, int SDAOutputLen, int numMatingEvents, Top
  */
 
 void Steady::worst(bool min){
+
     if (min) { // if minimizing the worst value is the largest fitness
-        for (double val: popFits) {// go through the populations fitness
+        popWorstFit = 0;
+        for (double val : popFits){// go through the populations fitness
             if (val > popWorstFit) popWorstFit = val;// if worst value found set it to worst value
         }
     }else{ // if maximizing the worst value is the smallest fitness
-        for (double val: popFits) {
+        popWorstFit = DBL_MAX;
+        for (double val : popFits){
             if (val < popWorstFit) popWorstFit = val;
         }
     }
@@ -323,12 +341,9 @@ Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int p
     this->mutOperator = mutOperator;
     this->mutationRate = mutRate;
     this->tournSize = tournSize;
-
     this->heurFunction = heurFunction;
 
-    int outputLen = (T.tNumNodes*(T.tNumNodes-1))/2;
-    this->maxConnections = outputLen;
-    SDAResponseLength = outputLen;// assign that value to the SDA response length global variable
+    SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
 
-    Evolver(numStates, outputLen, numGen, T, MyFile);
+    Evolver(numStates, numGen, T, MyFile);
 }
