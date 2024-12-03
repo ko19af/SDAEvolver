@@ -44,7 +44,8 @@ int Steady::MatingEvent(SDA* population, Topology& T){
         dead[tournIdxs[tournSize - 1]] = false;// set its status as not dead
     }
 
-    child2.fillOutput(c, false, cout);// fill vector using SDA of second child
+    c = vector<int>(SDAResponseLength, 0);
+    child2.fillOutput(c, false, cout); // fill vector using SDA of second child
 
     if(necroticFilter(c, T)){// repeat above process for second child
         popFits[tournIdxs[tournSize - 2]] = popWorstFit;
@@ -106,18 +107,10 @@ vector<int> Steady::TournSelect(int size, bool decreasing) {
 
 
 double Steady::CalcFitness(SDA &member, Topology& T, int idx){
-    vector<int> c(SDAResponseLength, 0); // vector for holding response from SDA
-    member.fillOutput(c, false, cout);// fill vector using SDA
-    
-    if(necroticFilter(c, T)){// check if the member is necrotic
-        dead[idx] = true;// set dead value of the member to true
-        return popWorstFit;// set the memebers fitness value to the populations current worst fitness
-    }                      
 
-    T.setConnections(c, false, heurFunction);//set the connections in the topology
+    T.configNet(heurFunction, false);// load in additional info for fitness calculation
     
-    switch (heurFunction)// switch function determing which heurestic function is being used for evaluation
-    {
+    switch (heurFunction){// switch determing which heurestic function is used for evaluation
     case 0:
         return distanceFitness(T);
             break;
@@ -152,11 +145,16 @@ double Steady::CalcFitness(SDA &member, Topology& T, int idx){
 
 bool Steady::necroticFilter(vector<int>& connections, Topology& T){
     int count = 0;// variable counting the number of connections in the member
+    int pos = 0;// determines what positon of the vector is being read
+    int max = 7; // max amount of connections
     
-    for (int val: connections) if(val == 1) count++;// count the number of connections in the members output
-    
-    if (count < 1 * T.tNumNodes || count > 7 * T.tNumNodes)  return true; // DEAD
-    else return false;// return false if member is within bounds
+    do{
+        if(connections[pos] == 1) count++;// if vector contains one in position increment count
+        pos++;// move position in vector
+    } while (count <= max * T.tNumNodes && pos < connections.size());// while count is less than maximum and vector bounds are not exceeded
+
+    if ((count < 1 * T.tNumNodes || count > max * T.tNumNodes) || T.setConnections(connections) )  return true; // DEAD
+    else return false;// return false if member is within bounds and edge connects to cloud
 }
 
 /**
@@ -185,24 +183,34 @@ double Steady::dataFitness(Topology& T){
  */
 
 double Steady::distanceFitness(Topology& T){
-    // Fitness function sums all distances an edge node uses to reach a cloud node through topology
-    double val = 0;
-    for (int x = 0; x < T.numENodes; x++){// for each edge node
-        vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
-        sPath[x] = 0;// set distance to starting edge node to zero
-        T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
+    double val = 0;// total connection distance in the network
+    int numC = 0;// number of connections
 
-        int count = 0;// number of cloud nodes edge node connects to
-        double dist = 0;// total distance from edge node to cloud node
-        for (int i = 0; i < T.numCNodes; i++){
-            if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
-                dist += sPath[T.tNumNodes - 1 - i];// add distance
-                count++;// increment connection count
+    for (int x = 0; x < T.tNumNodes; x++){ // for all the nodes
+        for (int y = 0; y < x; y++){ // for all the nodes it could connect to
+            if(T.connections[x][y] != 0){// if there is a connection between the nodes
+                val += T.distance[x][y];// add the distance to the val
+                numC++;// increment number of connections present in the network
             }
-          }
-        if(count != 0) val += dist / count;// add average connection distance to total distance value
+        }
     }
-    return val/T.numENodes;// return the average distance from all edge nodes to a cloud node
+
+        // for (int x = 0; x < T.numENodes; x++){// for each edge node
+        //     vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
+        //     sPath[x] = 0;// set distance to starting edge node to zero
+        //     T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
+
+        //     int count = 0;// number of cloud nodes edge node connects to
+        //     double dist = 0;// total distance from edge node to cloud node
+        //     for (int i = 0; i < T.numCNodes; i++){
+        //         if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
+        //             dist += sPath[T.tNumNodes - 1 - i];// add distance
+        //             count++;// increment connection count
+        //         }
+        //       }
+        //     if(count != 0) val += dist / count;// add average connection distance to total distance value
+        // }
+        return val/numC; // return the average distance of all connections
 }
 
 /**
@@ -230,13 +238,11 @@ int Steady::PrintPopFits(ostream &outStrm, vector<double> &popFits) {
     outStrm << "Fitness Values: ";
     bool first = true;
 
-    worst(true);// find worst value in the population
-
     for (int fit = 0; fit < popFits.size(); fit++){// for each entry in the popFits vector
        
         if(dead[fit]){// if member of population is dead
             popFits[fit] = popWorstFit;// set its fitness value to the worst value
-            continue;// don't print ???????????????????????????????????????????????
+            continue;// don't print
         }
 
         // This ensures commas after each fitness value other than the last
@@ -262,18 +268,27 @@ int Steady::PrintPopFits(ostream &outStrm, vector<double> &popFits) {
 int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population){
     double avgFit = 0;// Holds the average fitness
     int bestIdx = 0;// Stores the best member of populations location
+    int amount = 0;
 
     for (int x = 0; x < popFits.size(); x++){// For each entry
-        avgFit += popFits[x];// Add to average sum
+        if(!dead[x]){
+            avgFit += popFits[x];// Add to average sum if not dead
+            amount++;
+        }
         if(popFits[bestIdx] > popFits[x]) bestIdx = x;// Get best population index
     }
+
+    vector<int> c(SDAResponseLength, 0); // vector for holding response from SDA
+    population[bestIdx].fillOutput(c, false, cout);// fill vector using SDA
 
     // Report the best SDA from GA
     outStrm << "Mutation Rate: " << mutationRate * 100 << "%" << endl;
     outStrm << "Best SDA: " << population[bestIdx].print(outStrm) << endl;
-    outStrm << "Best Layout: " << "Coming Soon" << endl;
+    outStrm << "Best Layout: ";
+    for (int x : c) outStrm << x << " ";
+    outStrm << endl;
     outStrm << "Best Fitness: " << popFits[bestIdx] << endl;
-    outStrm << "Average Fitness: " << avgFit/popFits.size() << endl;
+    outStrm << "Average Fitness: " << avgFit/amount << endl;
     
     return 0;
 }
@@ -281,55 +296,39 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
 int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream& MyFile){
     SDA* population;
     population = new SDA[popSize];
+    bool min = true;
+    
+    if (min) popWorstFit = DBL_MAX;
+    else popWorstFit = DBL_MIN;
 
     // Step 1: initialize the population
     for (int i = 0; i < popSize; ++i) {
+
+        int c = 0;
+
         vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
         do{
+            SDAOutput = vector<int>(SDAResponseLength, 0); // vector for holding response from SDA
             population[i] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAResponseLength); // create a new SDA
             population[i].fillOutput(SDAOutput, false, cout);// fill vector using SDA
-        } while(necroticFilter(SDAOutput, T));// while the member is necrotic
-        SDAOutput.clear();
+
+        } while (necroticFilter(SDAOutput, T)); // while the member is necrotic
         popFits.push_back(CalcFitness(population[i], T, i)); // calculate the fitness of the member
         dead.push_back(false);// set dead status as false
     }
 
-    MyFile << "Initial Pop Fitness values: " << endl;
 
     // Step 2: Evolution
     for (int gen = 0; gen < numMatingEvents; ++gen) {
         if(gen % (numMatingEvents / 10) == 0) PrintPopFits(MyFile, popFits);// print the initial pop value and pop value every 10th generation
         MatingEvent(population, T);// perform mating event
     }
-
+    PrintPopFits(MyFile, popFits);// print the final pop value and pop value
     // Step 3: Reporting
-    MyFile << "Final Pop Fitness values: " << endl;
     PrintReport(MyFile, popFits, population);
 
     delete[] population;
     return 0;
-}
-
-/**
- * This method goes through the population and determines which fitness value is the worst
- * based on the param passed into the method
- * 
- * @param min decides if the worst value is the max value or min value in the population
- */
-
-void Steady::worst(bool min){
-
-    if (min) { // if minimizing the worst value is the largest fitness
-        popWorstFit = 0;
-        for (double val : popFits){// go through the populations fitness
-            if (val > popWorstFit) popWorstFit = val;// if worst value found set it to worst value
-        }
-    }else{ // if maximizing the worst value is the smallest fitness
-        popWorstFit = DBL_MAX;
-        for (double val : popFits){
-            if (val < popWorstFit) popWorstFit = val;
-        }
-    }
 }
 
 Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){

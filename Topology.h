@@ -15,20 +15,21 @@ public:
     explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = true);
     explicit Topology(string& fileName, bool verbose = false);
     int ShortestPath(int position, vector<double> &sPath);
-    void setConnections(vector<int>& c, bool verbose, int& heurFunction);
+    bool setConnections(vector<int>& c);
+    void configNet(int &heurFunction, bool verbose = false);
 
     /**
      * The layout of the network that the program will attempt to find the optimal configuration for
      */
 
     vector<vector<int>> network;
+    vector<vector<int>> location;// vecto holding the location of the nodes in the network
     vector<vector<int>> connections;
     vector<int> layer;
     vector<double> energyConsumption;
     vector<vector<double>> data;
     vector<vector<double>> distance; // 2-d vector tracking the distance between nodes
     vector<vector<double>> trafficMatrix; // 2-d vector tracking the incoming and ougoing traffic from a node in the network
-    vector<double> failed;// records data that failed to reach a cloud node
     int numNodes; // variable representing number of transmission nodes present in the network
     int numCNodes;// varialbe representing total number of cloud nodes in the topology
     int numENodes;// number of edge/fog nodes present in the network
@@ -37,7 +38,7 @@ public:
     bool analyzeData;
 
 private:
-    void readLayout(string& fileName);
+    void readLayout(string &fileName);
     void calculateDist();
     void PrintLayout();
     void printConnections();
@@ -51,6 +52,7 @@ private:
     int ChooseEnd(int y, int x, int numEnds);
     void EnergyConsumption(double transmissionRate = 0.03, double recevingRate = 0.03);
     double round(float var);
+    
 };
 
 #endif // Topology_H

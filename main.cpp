@@ -17,14 +17,14 @@ int main(int argc, char* argv[]) {
 
     int numStates = 6;
     int numChars = 2;
-    int popSize = 100;
+    int popSize = 50;
     int tournSelector = 3;
     int gaOperator = 1;
-    int numGen = 1000;
+    int numGen = 10000;
     int crossOp = 1;
-    double crossRate = .1;
+    double crossRate = 0.9;
     int mutOperator = 1;
-    double mutRate = 0.1;
+    double mutRate = 0.9;
     int runs = 30;
     int heurFunction = 2;
 

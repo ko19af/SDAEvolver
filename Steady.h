@@ -30,9 +30,7 @@ class Steady {
         int Evolver(int SDANumStates, int numGenerations, Topology& T, ostream& MyFile);
         int PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population);
 
-        void worst(bool min);
-
-        double popWorstFit = 0;
+        double popWorstFit;
         int heurFunction = 0;
         int SDANumChars = 2;
         int SDAResponseLength = 2;
