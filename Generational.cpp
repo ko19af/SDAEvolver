@@ -122,7 +122,7 @@ double Generational::genCalcFitness(SDA &member, Topology& T){
     bool verbose = false;
     vector<int> c(genSDAResponseLength); // vector for holding response from SDA
     member.fillOutput(c, false, cout);// fill vector using SDA
-    T.setConnections(c, verbose, heurFunction);//set the connections in the topology
+    T.setConnections(c);//set the connections in the topology
     switch(heurFunction){
         case 0:
         return distanceFitness(T);
