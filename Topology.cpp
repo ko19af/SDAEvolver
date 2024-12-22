@@ -373,13 +373,13 @@ void Topology:: calculateDist(){
     this->distance = vector<vector<double>>(tNumNodes, vector<double>(tNumNodes)); // vector for recording the distance
     this->location = vector<vector<int>>(tNumNodes, vector<int>(2));// vector holding the y and x position of a node in the network
     
-    for (int y = 0; y < tNumNodes; y++){// go through the rows
-        for (int x = 0; x < y; x++){// go through the columns
+    for (int y = 0; y < tNumNodes; y++){// select origin node
+        for (int x = 0; x < y; x++){// select the node we want to calculate distance to
             int x1, x2, y1, y2;// variables holding x and y co-ordinates of the nodes
             findNode(x1, y1, y + 1); // find x and y co-ordinate of origin node
             findNode(x2, y2, x + 1); // find x and y co-ordinate of node we wish to calculate distance to
             double dist = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)); // caluclate euclidean distance
-            distance[y][x] = dist;// set distance values etween the nodes
+            distance[y][x] = dist;// set distance values between the nodes
             distance[x][y] = dist;
             location[y] = {y1, x1};// record the nodes y and x position in the network
             location[x] = {y2, x2};
