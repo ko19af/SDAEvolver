@@ -8,12 +8,15 @@
 #include "SDA.h"
 #include "Topology.h"
 #include "Generational.h"
+#include "AttackSim.h"
 #include "Steady.h"
 #include "vector"
 
 using namespace std;
 
 int main(int argc, char* argv[]) {
+    string file = "Output/Experiment_6250311000010.90000010.9000003020.txt";
+    AttackSim(file, false);
 
     int numStates = 6;
     int numChars = 2;

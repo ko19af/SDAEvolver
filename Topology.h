@@ -14,6 +14,7 @@ class Topology {
 public:
     explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = true);
     explicit Topology(string& fileName, bool verbose = false);
+    explicit Topology(vector<vector<int>> connections, int numENodes);
     int ShortestPath(int position, vector<double> &sPath);
     bool setConnections(vector<int>& c);
     void configNet(int &heurFunction, bool verbose = false);

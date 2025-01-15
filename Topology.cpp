@@ -8,6 +8,7 @@
 Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbose){
     
     vector<vector<int>> network(y, vector<int>(x, false));
+    this->location = vector<vector<int>>();// vector holding the y and x position of a node in the network
     
     this->network = network;
     this->numNodes = numNodes;
@@ -16,9 +17,9 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
     this->tNumNodes = numNodes + ends + starts; // calculate number of nodes in Topology
 
     EdgeTraffic(starts, 100);// distribute the traffic among the edge nodes
-    ChooseStart(x, starts);
-    ChooseEnd(y, x, ends);
-    ChooseNodeLocations(x, y, numNodes);
+    ChooseStart(x, starts);// choose edge node locations
+    ChooseNodeLocations(x, y, numNodes);// choose tower node locations
+    ChooseEnd(y, x, ends);// choose cloud node locations
     calculateDist();// calculate the distance bettwen the nodes and record their positions
     if(verbose) PrintLayout();
 }
@@ -26,28 +27,33 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
 Topology::Topology(string& fileName, bool verbose){
     
     readLayout(fileName);// read in the file containing the topology
-    
-    int eNodes = 0;
-    int cNodes = 0;
-    int nNodes = 0;
+    this->numENodes = 0;
+    this->numCNodes = 0;
+    this->numNodes = 0;
+    this->tNumNodes = 0; // calculate total number of nodes in Topology
 
-    for (int n : network[0]) if (n != 0) eNodes++;// count the number of each type of node
-    for(int n : network[network.size()-1]) if(n !=0 ) cNodes++;
-    for (int y = 1; y < network.size() - 1; y++){
-        for (int x = 0; x < network[0].size(); x++){
-            if(network[y][x] != 0) nNodes++;
+    this->location = vector<vector<int>>();// vector holding the y and x position of a node in the network
+
+    for (int y = 0; y < network.size(); y++){// go through the rows
+        for (int x = 0; x < network[0].size(); x++){// go through the coloumns
+            if(network[y][x] != 0){// if network has a tower at that position
+                if(y == 0) numENodes++;// if at first layer of network increment number of edge nodes
+                else if(y > 0 && y < network.size()-1) numNodes++;// if in the middle layer increment number of tower nodes
+                else numCNodes++;// else increment number of cloud nodes
+                location.push_back({y, x});// record tower position in matrix
+                tNumNodes++;// increment total number of towers
+            }
         }
     }
 
-    this->numENodes = eNodes;
-    this->numCNodes = cNodes;
-    this->numNodes = nNodes;
-    this->tNumNodes = nNodes + cNodes + eNodes; // calculate total number of nodes in Topology
-
-    EdgeTraffic(eNodes, 100);// distribute the traffic to the edge nodes
+    EdgeTraffic(numENodes, 100);// distribute the traffic to the edge nodes
     calculateDist();// calculate the distance bettwen the nodes
 
     if (verbose) PrintLayout();
+}
+
+Topology::Topology(vector<vector<int>> connections, int numENodes){
+
 }
 
 /**
@@ -277,7 +283,8 @@ int Topology::ChooseStart(int x, int numStarts){
         do{
             start = rand() % x; // randomly choose the data starting position in the network
         } while (network[0][start] == 1);
-        network[0][start] = 1;
+        network[0][start] = 1; // set node location in the network
+        location.push_back({0, start}); // record node location in the network
     }
     return 0;
 }
@@ -298,6 +305,7 @@ int Topology::ChooseEnd(int y, int x, int numEnds){
             end = rand() % x; // randomly choose the data starting position in the network
         } while (network[y-1][end] == 1); // if position was already choosen choose another
         network[y-1][end] = 1;
+        location.push_back({y - 1, end});
     }
     return 0;
 }
@@ -319,6 +327,7 @@ void Topology::ChooseNodeLocations(int x, int y, int numNodes){
             column = rand() % x;// randomly choose column to insert node
         } while (network[row][column] == 1); // if position is already choosen choose another
         network[row][column] = 1;
+        location.push_back({row, column});
     }
 }
 
@@ -347,42 +356,24 @@ int Topology::ShortestPath(int position, vector<double> &sPath){// initialize di
 }
 
 /**
- * This method finds the location of the nodes the program is calculating the euclidean
- * distance for in the topology of the network
- *
- * @param x is the designated column of the node in the topology
- * @param y is the designated row of the node in the  topology
- * @param node is the node the program is looking for in the Topology
-*/
-
-void Topology::findNode(int &x, int &y, int node){
-    int count = 0;// keep track of what node we have found in the network
-    for (y = 0; y < network.size(); y++){// select row we will look through
-        for (x = 0; x < network[0].size(); x++){// select column
-            if(network[y][x] != 0) count++;// if there is a node, increment count
-            if(count == node) return;// if found the node return to call
-        }
-    }
-}
-
-/**
  * This method calculates the distance between all the nodes and record thier position in the matrix
  */
 
 void Topology:: calculateDist(){
     this->distance = vector<vector<double>>(tNumNodes, vector<double>(tNumNodes)); // vector for recording the distance
-    this->location = vector<vector<int>>(tNumNodes, vector<int>(2));// vector holding the y and x position of a node in the network
     
     for (int y = 0; y < tNumNodes; y++){// select origin node
         for (int x = 0; x < y; x++){// select the node we want to calculate distance to
-            int x1, x2, y1, y2;// variables holding x and y co-ordinates of the nodes
-            findNode(x1, y1, y + 1); // find x and y co-ordinate of origin node
-            findNode(x2, y2, x + 1); // find x and y co-ordinate of node we wish to calculate distance to
-            double dist = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)); // caluclate euclidean distance
+            
+            int x1 = location[y][0];//retreive location of nodes in the network
+            int y1 = location[y][1];
+            int x2 = location[x][0];
+            int y2 = location[x][1];
+
+            double dist = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)); // caluclate euclidean distance between the nodes
+
             distance[y][x] = dist;// set distance values between the nodes
             distance[x][y] = dist;
-            location[y] = {y1, x1};// record the nodes y and x position in the network
-            location[x] = {y2, x2};
         }
     }
 }
