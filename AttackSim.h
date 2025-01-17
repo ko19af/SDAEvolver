@@ -12,9 +12,7 @@ using namespace std;
 
 class AttackSim {
 public:
-    explicit AttackSim(string& fileName, bool verbose = false);
-
-    
+    explicit AttackSim(string& fileName, bool verbose = false, int heurFunction = 0);
 
 private:
     vector<vector<int>> network;// vector holding the network layout

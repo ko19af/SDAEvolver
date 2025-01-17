@@ -14,7 +14,8 @@ using namespace std;
 class Steady {
     public:
         explicit Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
-        double CalcFitness(SDA &member, Topology& T, int idx);//move to private when finished testing!!!!!!!!!!!!!!!!!!!
+        explicit Steady(Topology& T, int heurFunction);
+        double CalcFitness(SDA &member, Topology &T, int idx); // move to private when finished testing!!!!!!!!!!!!!!!!!!!
 
     private:
         double distanceFitness(Topology& T);

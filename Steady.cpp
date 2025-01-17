@@ -331,6 +331,10 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
     return 0;
 }
 
+/**
+ * This constructor is for use in desiging the network connection layouts
+ */
+
 Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){
 
     this->SDANumChars = numChars;
@@ -345,4 +349,16 @@ Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int p
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
 
     Evolver(numStates, numGen, T, MyFile);
+}
+
+/**
+ *This constructor is for use in testing the network layout connections resilience to cyberattacks
+ * @param T is the class holding the Topology being examined
+ * @param heurFunction is the heurestic funciton being used for the examination
+ *
+*/
+
+Steady::Steady(Topology& T, int heurFunction){
+
+    this->heurFunction = heurFunction;
 }

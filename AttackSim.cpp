@@ -1,12 +1,15 @@
 #include "AttackSim.h"
 #include "Topology.h"
+#include "Steady.h"
 
-AttackSim::AttackSim(string& filename, bool verbose){
+AttackSim::AttackSim(string& filename, bool verbose, int heurFunction){
     readEData(filename);
 
     performTowerAttack(connections.size());// perform the DOS/DDOS attack that disables towers
 
     Topology T = Topology(connections, location, numENodes);// load info into topologies class
+
+    Steady(T, heurFunction);// call steady to make use of heurestic methods in the class
 }
 
 /**
@@ -128,16 +131,16 @@ void AttackSim::performTowerAttack(int actTowers, int remTowers){
 
     for (int x = 0; x < remTowers; x++){// for the number of towers being attacked
         do{
-            tow = ((double)rand() / RAND_MAX) * (actTowers - (0)) + (0);
+            tow = ((double)rand() / RAND_MAX) * (actTowers - (0)) + (0);// randomly select a tower
         }while (attTowers[tow] != 0);// if that tower was already selected, select a tower until it is one that has not been chosen
         attTowers[tow] = 1;// set tower as being attacked
     }
 
     int cr = 0;// initial pointers telling which row and coloumn are being added to the new connection matrix
-    int cc = 0;
-
+    
     for (int y = 0; y < attackedNet.size(); y++){// go through rows of attacked connections
         while (attTowers[cr] == 1) cr++;// if row is being removed move to next row
+        int cc = 0;// pointer for telling which cloumn is being added to the new connection matrix (gets reset for each row)
         for (int x = 0; x < attackedNet.size(); x++){// go through coloumns of attacked connections
             while (attTowers[cc] == 1) cc++;// if coloumn is being attacked move to next coloumn
             attackedNet[y][x] = connections[cr][cc];// set connections in attacked matrix
