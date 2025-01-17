@@ -52,8 +52,12 @@ Topology::Topology(string& fileName, bool verbose){
     if (verbose) PrintLayout();
 }
 
-Topology::Topology(vector<vector<int>> connections, int numENodes){
+Topology::Topology(vector<vector<int>> connections, vector<vector<int>> location, int numENodes){
+    this->location = location;
+    this->connections = connections;
 
+    EdgeTraffic(numENodes, 100);
+    calculateDist();
 }
 
 /**

@@ -20,6 +20,7 @@ private:
     vector<vector<int>> network;// vector holding the network layout
     vector<vector<int>> location;// vector holding the location of the nodes in the network
     vector<vector<int>> connections;// vector holding the connection layout
+    vector<int> attTowers;
     int numENodes;
     int numCNodes;
     int numNodes;

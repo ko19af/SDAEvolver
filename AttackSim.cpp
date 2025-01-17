@@ -6,11 +6,11 @@ AttackSim::AttackSim(string& filename, bool verbose){
 
     performTowerAttack(connections.size());// perform the DOS/DDOS attack that disables towers
 
-    Topology(connections);// perform analysis on the topologies
+    Topology T = Topology(connections, location, numENodes);// load info into topologies class
 }
 
 /**
- * This method read a provided network layout and reads it into the program
+ * This method reads a provided network layout from a file into the program
  * 
  * @param fileName is the name of the file being read into the system
  */
@@ -21,7 +21,7 @@ void AttackSim::readLayout(string& fileName){
     string text;
     ifstream ReadFile(fileName);
     
-    while (getline (ReadFile, text, '\n')){
+    while (getline(ReadFile, text, '\n')){
         stringstream ss(text);// create string stream with text delimited by newline character
         while (getline(ss, text, '\t')) row.push_back(stoi(text));
         network.push_back(row);
@@ -62,7 +62,7 @@ void AttackSim::readEData(string& fileName){
     string tFile;// holds the topology file name
     ifstream ReadFile(fileName);// input file stream reading in the desired file
     for (int x = 0; x < 2; x++) getline(ReadFile, text); // get the second line from the file
-    split(text, ':', tFile);// split the text from the data wanted
+    split(text, ':', tFile);// split the text from the data wanted for getting the topology file name
 
     tFile = "Topologies/Layout_" + to_string(tFile[0] - '0' - 1) + ".txt";// get the topology file used for the experiment
 
@@ -123,7 +123,7 @@ bool AttackSim::split(string input, char del, string& c){
 
 void AttackSim::performTowerAttack(int actTowers, int remTowers){
     vector attackedNet = vector<vector<int>>(actTowers - remTowers, vector<int>(actTowers - remTowers));// create reduced connections matrix
-    vector attTowers = vector<int>(actTowers, 0);// vector recording the towers being attacked
+    this->attTowers = vector<int>(actTowers, 0);// vector recording the towers being attacked
     int tow;// randomly select a tower (may be changed later to SDA)
 
     for (int x = 0; x < remTowers; x++){// for the number of towers being attacked
@@ -146,5 +146,5 @@ void AttackSim::performTowerAttack(int actTowers, int remTowers){
         }
         cr++;// move to next row in original connections matrix
     }
-    this->connections = attackedNet;
+    this->connections = attackedNet;// set new connections matrix
 }
