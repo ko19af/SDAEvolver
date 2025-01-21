@@ -7,6 +7,8 @@
 #include <cmath>
 #include <string>
 #include <bits/stdc++.h>
+#include "Topology.h"
+#include "Steady.h"
 
 using namespace std;
 
@@ -19,6 +21,7 @@ private:
     vector<vector<int>> location;// vector holding the location of the nodes in the network
     vector<vector<int>> connections;// vector holding the connection layout
     vector<int> attTowers;
+
     int numENodes;
     int numCNodes;
     int numNodes;

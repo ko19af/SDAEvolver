@@ -14,14 +14,15 @@ using namespace std;
 class Steady {
     public:
         explicit Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
-        explicit Steady(Topology& T, int heurFunction);
-        double CalcFitness(SDA &member, Topology &T, int idx); // move to private when finished testing!!!!!!!!!!!!!!!!!!!
+        explicit Steady(Topology& T, int heurFunction, string fName);
 
     private:
         double distanceFitness(Topology& T);
         double energyFitness(Topology& T);
         double dataFitness(Topology& T);
+        double CalcFitness(Topology &T);
         bool necroticFilter(vector<int>& connections, Topology& T);
+        bool attNecroticFilter(Topology& T);
         vector<bool> dead;
 
         int PrintPopFits(ostream &outStrm, vector<double> &popFits);
@@ -30,6 +31,10 @@ class Steady {
         vector<double> popFits;
         int Evolver(int SDANumStates, int numGenerations, Topology& T, ostream& MyFile);
         int PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population);
+
+        int necroticMax = 7;// max number of connections allowed for the necrotic filter
+        int necroticMin = 1;// min number of connections allowed by the necrotic filter
+        vector<int> rawConnections;
 
         double popWorstFit;
         int heurFunction = 0;

@@ -1,15 +1,22 @@
 #include "AttackSim.h"
-#include "Topology.h"
-#include "Steady.h"
 
+/**
+ * Performs a cyberattack simulation on a provided network to determine its reslience to the attack
+ * 
+ * @param filename is the file holding information on the network being attacked
+ * @param verbose is a boolean determining if the info should be printed
+ * @param heurFunction decides which heurestic function should be used for the analysis
+ */
 AttackSim::AttackSim(string& filename, bool verbose, int heurFunction){
     readEData(filename);
+
+    string outputFName = "Attacked_" + filename;// create the file name that that will record the results
 
     performTowerAttack(connections.size());// perform the DOS/DDOS attack that disables towers
 
     Topology T = Topology(connections, location, numENodes);// load info into topologies class
 
-    Steady(T, heurFunction);// call steady to make use of heurestic methods in the class
+    Steady(T, heurFunction, outputFName);// call steady to make use of heurestic methods in the class
 }
 
 /**
@@ -57,7 +64,7 @@ void AttackSim::readLayout(string& fileName){
 /**
  * This method reads a provided connection layout and reads it into the program
  * 
- * @param fileName2 is the name of the file being read into the system
+ * @param fileName is the name of the file being read into the system
  */
 
 void AttackSim::readEData(string& fileName){
@@ -125,29 +132,14 @@ bool AttackSim::split(string input, char del, string& c){
  */
 
 void AttackSim::performTowerAttack(int actTowers, int remTowers){
-    vector attackedNet = vector<vector<int>>(actTowers - remTowers, vector<int>(actTowers - remTowers));// create reduced connections matrix
-    this->attTowers = vector<int>(actTowers, 0);// vector recording the towers being attacked
-    int tow;// randomly select a tower (may be changed later to SDA)
 
     for (int x = 0; x < remTowers; x++){// for the number of towers being attacked
-        do{
-            tow = ((double)rand() / RAND_MAX) * (actTowers - (0)) + (0);// randomly select a tower
-        }while (attTowers[tow] != 0);// if that tower was already selected, select a tower until it is one that has not been chosen
-        attTowers[tow] = 1;// set tower as being attacked
+        attTowers.push_back(((double)rand() / RAND_MAX) * (actTowers - (0)) + (0)); //randomly select a tower and push to the vector
     }
 
-    int cr = 0;// initial pointers telling which row and coloumn are being added to the new connection matrix
+    for(int tow: attTowers) connections.erase(connections.begin() + tow);// remove the deleted towers rows
     
-    for (int y = 0; y < attackedNet.size(); y++){// go through rows of attacked connections
-        while (attTowers[cr] == 1) cr++;// if row is being removed move to next row
-        int cc = 0;// pointer for telling which cloumn is being added to the new connection matrix (gets reset for each row)
-        for (int x = 0; x < attackedNet.size(); x++){// go through coloumns of attacked connections
-            while (attTowers[cc] == 1) cc++;// if coloumn is being attacked move to next coloumn
-            attackedNet[y][x] = connections[cr][cc];// set connections in attacked matrix
-            attackedNet[x][y] = connections[cc][cr];
-            cc++;// move to the next colomn in original connections matrix
-        }
-        cr++;// move to next row in original connections matrix
-    }
-    this->connections = attackedNet;// set new connections matrix
+    for(vector<int>& row : connections){// remove the deleted tower coloumns from each row
+        for(int tow : attTowers) row.erase(row.begin() + tow);
+    } 
 }

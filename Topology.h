@@ -17,6 +17,7 @@ public:
     explicit Topology(vector<vector<int>> connections, vector<vector<int>> location, int numENodes);
     int ShortestPath(int position, vector<double> &sPath);
     bool setConnections(vector<int>& c);
+    bool setConnections();
     void configNet(int &heurFunction, bool verbose = false);
 
     /**

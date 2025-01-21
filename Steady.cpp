@@ -40,7 +40,7 @@ int Steady::MatingEvent(SDA* population, Topology& T){
         dead[tournIdxs[tournSize - 1]] = true;// set its status as dead
     }
     else{// if member is not dead
-        popFits[tournIdxs[tournSize - 1]] = CalcFitness(child1, T, tournIdxs[tournSize - 1]);// calculate members fitness
+        popFits[tournIdxs[tournSize - 1]] = CalcFitness(T);// calculate members fitness
         dead[tournIdxs[tournSize - 1]] = false;// set its status as not dead
     }
 
@@ -51,7 +51,7 @@ int Steady::MatingEvent(SDA* population, Topology& T){
         popFits[tournIdxs[tournSize - 2]] = popWorstFit;
         dead[tournIdxs[tournSize - 2]] = true;
     }else{
-        popFits[tournIdxs[tournSize-2]] = CalcFitness(child2, T, tournIdxs[tournSize-2]);
+        popFits[tournIdxs[tournSize-2]] = CalcFitness(T);
         dead[tournIdxs[tournSize - 2]] = false; 
     }
     return 0;
@@ -105,8 +105,13 @@ vector<int> Steady::TournSelect(int size, bool decreasing) {
     return tournIdxs;
 }
 
+/**
+ * This method sets up the topology based on the heurestic being used then evaluates the fitness of the network
+ * 
+ * @param T is the Topology being examined (connections were set by the necrotic filter before enterin method)
+ */
 
-double Steady::CalcFitness(SDA &member, Topology& T, int idx){
+double Steady::CalcFitness(Topology& T){
 
     T.configNet(heurFunction, false);// load in additional info for fitness calculation
     
@@ -138,6 +143,7 @@ double Steady::CalcFitness(SDA &member, Topology& T, int idx){
 /**
  * This method determines if a member of the population is necrotic
  * by checking the number of connections present in its output
+ * the method sets the connections if they fall within the acceptable bounds
  * 
  * @param connections is the vector containing the connections from the member being examined
  * @param T is the Topology being examined
@@ -146,14 +152,40 @@ double Steady::CalcFitness(SDA &member, Topology& T, int idx){
 bool Steady::necroticFilter(vector<int>& connections, Topology& T){
     int count = 0;// variable counting the number of connections in the member
     int pos = 0;// determines what positon of the vector is being read
-    int max = 7; // max amount of connections
     
     do{
         if(connections[pos] == 1) count++;// if vector contains one in position increment count
         pos++;// move position in vector
-    } while (count <= max * T.tNumNodes && pos < connections.size());// while count is less than maximum and vector bounds are not exceeded
+    } while (count <= necroticMax * T.tNumNodes && pos < connections.size());// while count is less than maximum and vector bounds are not exceeded
 
-    if ((count < 1 * T.tNumNodes || count > max * T.tNumNodes) || T.setConnections(connections) )  return true; // DEAD
+    if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections(connections)) return true; // DEAD
+    else return false;// return false if member is within bounds and edge connects to cloud
+}
+
+/**
+ * A specialized necrotic filter for an attacked network
+ * 
+ * @param connections are the connections being examined
+ * @param T is the topology the connections are being applied to and examined
+ */
+
+bool Steady::attNecroticFilter(Topology& T){
+    int count = 0;// variable counting the number of connections in the member
+    int pos = 0;// determines what positon of the vector is being read
+    vector<int> rawConnections;
+
+    for (int y = 0; y < T.connections.size(); y++){// go through rows of attacked connections
+        for (int x = 0; x < T.connections.size(); x++){// go through coloumns of attacked connections
+            rawConnections.push_back(T.connections[y][x]);// push back the connection into the raw connections vector
+        }
+    }
+
+    do{
+        if(rawConnections[pos] == 1) count++;// if vector contains one in position increment count
+        pos++;// move position in vector
+    } while (count <= necroticMax * T.tNumNodes && pos < rawConnections.size());// while count is less than maximum and vector bounds are not exceeded
+
+    if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections()) return true; // DEAD
     else return false;// return false if member is within bounds and edge connects to cloud
 }
 
@@ -304,8 +336,6 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
     // Step 1: initialize the population
     for (int i = 0; i < popSize; ++i) {
 
-        int c = 0;
-
         vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
         do{
             SDAOutput = vector<int>(SDAResponseLength, 0); // vector for holding response from SDA
@@ -313,7 +343,7 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
             population[i].fillOutput(SDAOutput, false, cout);// fill vector using SDA
 
         } while (necroticFilter(SDAOutput, T)); // while the member is necrotic
-        popFits.push_back(CalcFitness(population[i], T, i)); // calculate the fitness of the member
+        popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
         dead.push_back(false);// set dead status as false
     }
 
@@ -355,10 +385,14 @@ Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int p
  *This constructor is for use in testing the network layout connections resilience to cyberattacks
  * @param T is the class holding the Topology being examined
  * @param heurFunction is the heurestic funciton being used for the examination
+ * @param fName is the name of the file the results will be saved in
  *
 */
 
-Steady::Steady(Topology& T, int heurFunction){
+Steady::Steady(Topology& T, int heurFunction, string fName){
 
     this->heurFunction = heurFunction;
+
+    if (attNecroticFilter(T)) cout << "Network is dead" << endl; // if the network is dead based on the attack necrotic filter criteria
+    else cout << "Fitness of network: " << CalcFitness(T) << endl; // else network is not dead, calculate its fitness
 }

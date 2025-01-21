@@ -387,6 +387,8 @@ void Topology:: calculateDist(){
  * present in the network topology and then layers the nodes to check all
  * edge nodes connect to a cloud node
  * 
+ * (For non-attacked networks)
+ * 
  * @param c is the vector produced by the SDA detainling the connections present in the network
  * @return is the boolean determing if this network connects all edge nodes to their cloud nodes
 */
@@ -411,6 +413,23 @@ bool Topology::setConnections(vector<int>& c){
 
     for (int x = 0; x < numENodes; x++){// go through the edge nodes
         if(layer[x] == -1) return true;// if edge node is not connected to cloud node network is dead
+    }
+    
+    return false;// return true if all edge nodes connect to a cloud node
+}
+
+/**
+ * This method sets the connections for an attacked network as the connections matix is alread set beforehand
+ * 
+ * (For attacked networks)
+ */
+
+bool Topology::setConnections(){
+
+    LayerNodes();// layer the nodes in the network
+
+    for (int x = 0; x < numENodes; x++){// go through the edge nodes
+        if(layer[x] == -1) return true;// if an edge node is not connected to cloud node network is dead
     }
     
     return false;// return true if all edge nodes connect to a cloud node
