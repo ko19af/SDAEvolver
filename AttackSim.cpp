@@ -13,6 +13,7 @@ AttackSim::AttackSim(string& filename, bool verbose, int heurFunction){
     string outputFName = "Attacked_" + filename;// create the file name that that will record the results
 
     performTowerAttack();// perform the DOS/DDOS attack that disables towers
+
     for(vector<vector<int>> connections : networkCon){
         Topology T = Topology(connections, location, numENodes, tNumNodes, numNodes, numCNodes);// load info into topologies class
         Steady(T, heurFunction, outputFName);// call steady to make use of heurestic methods in the class
@@ -80,7 +81,7 @@ void AttackSim::readEData(string& fileName){
 
     vector<vector<int>> connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));// initialize connections matrix
 
-    while(getline (ReadFile, text)){// read  rest of the lines from the file
+    while(getline(ReadFile, text)){// read  rest of the lines from the file
         string c = "";// string holds splited part from the files text
         if(split(text, ':', c)){
             for (int y = 0; y < tNumNodes; y++){// load connections vector into the connections matrix
@@ -96,9 +97,9 @@ void AttackSim::readEData(string& fileName){
                 }
             }
             networkCon.push_back(connections);// push network connections into vector
-            //break; // if found the line and extracted the vector break out of loop
         }
     }
+    ReadFile.close();// close the file being read
 }
 
 /**
@@ -134,7 +135,7 @@ bool AttackSim::split(string input, char del, string& c){
 
 void AttackSim::performTowerAttack(int remTowers){
 
-    vector<int> attTowers = vector<int>(tNumNodes, 0);
+    vector<int> attTowers = vector<int>(tNumNodes, 0);// vector determing which towers are being attacked
 
     this->tNumNodes -= remTowers;// remove the number of deactivated towers from the total count and non cloud/edge node towers
     this->numNodes -= remTowers;

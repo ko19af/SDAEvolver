@@ -172,18 +172,14 @@ bool Steady::necroticFilter(vector<int>& connections, Topology& T){
 bool Steady::attNecroticFilter(Topology& T){
     int count = 0;// variable counting the number of connections in the member
     int pos = 0;// determines what positon of the vector is being read
-    vector<int> rawConnections;
+    vector<int> rawConnections;// vector holding the connections from one tower to another
 
     for (int y = 0; y < T.connections.size(); y++){// go through rows of attacked connections
-        for (int x = 0; x < T.connections.size(); x++){// go through coloumns of attacked connections
+        for (int x = 0; x < y; x++){// go through coloumns of attacked connections
             rawConnections.push_back(T.connections[y][x]);// push back the connection into the raw connections vector
+            if(T.connections[y][x] == 1) count++;// count the number of connections in the network
         }
     }
-
-    do{
-        if(rawConnections[pos] == 1) count++;// if vector contains one in position increment count
-        pos++;// move position in vector
-    } while (count <= necroticMax * T.tNumNodes && pos < rawConnections.size());// while count is less than maximum and vector bounds are not exceeded
 
     if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections()) return true; // DEAD
     else return false;// return false if member is within bounds and edge connects to cloud

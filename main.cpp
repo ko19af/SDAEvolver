@@ -18,6 +18,8 @@ int main(int argc, char* argv[]) {
     string file = "Output/Experiment_6250311000010.90000010.9000003020.txt";
     AttackSim(file, false, 0);
 
+    exit(1);
+
     int numStates = 6;
     int numChars = 2;
     int popSize = 50;
