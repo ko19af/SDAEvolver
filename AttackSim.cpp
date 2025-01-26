@@ -8,15 +8,15 @@
  * @param heurFunction decides which heurestic function should be used for the analysis
  */
 AttackSim::AttackSim(string& filename, bool verbose, int heurFunction){
-    readEData(filename);
+    readEData(filename);// read the information in from the file
 
     string outputFName = "Attacked_" + filename;// create the file name that that will record the results
 
-    performTowerAttack(connections.size());// perform the DOS/DDOS attack that disables towers
-
-    Topology T = Topology(connections, location, numENodes);// load info into topologies class
-
-    Steady(T, heurFunction, outputFName);// call steady to make use of heurestic methods in the class
+    performTowerAttack();// perform the DOS/DDOS attack that disables towers
+    for(vector<vector<int>> connections : networkCon){
+        Topology T = Topology(connections, location, numENodes, tNumNodes, numNodes, numCNodes);// load info into topologies class
+        Steady(T, heurFunction, outputFName);// call steady to make use of heurestic methods in the class
+    }
 }
 
 /**
@@ -78,7 +78,7 @@ void AttackSim::readEData(string& fileName){
 
     readLayout(tFile);// read the topology information
 
-    this->connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));// initialize connections matrix
+    vector<vector<int>> connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));// initialize connections matrix
 
     while(getline (ReadFile, text)){// read  rest of the lines from the file
         string c = "";// string holds splited part from the files text
@@ -95,8 +95,9 @@ void AttackSim::readEData(string& fileName){
                     }
                 }
             }
-            break;// if found the line and extracted the vector break out of loop
-        } 
+            networkCon.push_back(connections);// push network connections into vector
+            //break; // if found the line and extracted the vector break out of loop
+        }
     }
 }
 
@@ -131,15 +132,31 @@ bool AttackSim::split(string input, char del, string& c){
  * @param remTowers is the number of towers being disabled in the network for the simulation
  */
 
-void AttackSim::performTowerAttack(int actTowers, int remTowers){
+void AttackSim::performTowerAttack(int remTowers){
+
+    vector<int> attTowers = vector<int>(tNumNodes, 0);
+
+    this->tNumNodes -= remTowers;// remove the number of deactivated towers from the total count and non cloud/edge node towers
+    this->numNodes -= remTowers;
+
+    random_device rd;// initialize random number generator
+    mt19937 gen(rd());
+    uniform_int_distribution<> distrib(numENodes, (tNumNodes-numENodes-1));// define range to exclude the cloud and edge nodes
 
     for (int x = 0; x < remTowers; x++){// for the number of towers being attacked
-        attTowers.push_back(((double)rand() / RAND_MAX) * (actTowers - (0)) + (0)); //randomly select a tower and push to the vector
+        int aTow = 0;
+        do{
+            aTow = distrib(gen);// randomly select a tower to attack
+        } while (attTowers[aTow] == 1);// choose a different tower if it was alread selected
+        attTowers[aTow] = 1; // if tower is not already selected add to vector
     }
 
-    for(int tow: attTowers) connections.erase(connections.begin() + tow);// remove the deleted towers rows
-    
-    for(vector<int>& row : connections){// remove the deleted tower coloumns from each row
-        for(int tow : attTowers) row.erase(row.begin() + tow);
-    } 
+    for(vector<vector<int>> connections : networkCon){// for each connections matrix
+        for (int tow = 0; tow < attTowers.size(); tow++){// go through the vector containing the attacked towers
+            if(attTowers[tow] == 1){// if the tower is being attacked
+                connections.erase(connections.begin() + tow); // remove the deleted towers row
+                for(vector<int> row : connections) row.erase(row.begin() + tow);// remove the deleted towers coloumn
+            }
+        }
+    }
 }

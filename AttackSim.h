@@ -7,6 +7,7 @@
 #include <cmath>
 #include <string>
 #include <bits/stdc++.h>
+#include <random>
 #include "Topology.h"
 #include "Steady.h"
 
@@ -19,7 +20,7 @@ public:
 private:
     vector<vector<int>> network;// vector holding the network layout
     vector<vector<int>> location;// vector holding the location of the nodes in the network
-    vector<vector<int>> connections;// vector holding the connection layout
+    vector<vector<vector<int>>> networkCon;// vector holding all the network connections from a file
     vector<int> attTowers;
 
     int numENodes;
@@ -28,7 +29,7 @@ private:
     int tNumNodes;
 
     void readLayout(string &fileName);
-    void performTowerAttack(int actTowers, int remTowers = 1);
+    void performTowerAttack(int remTowers = 1);
     void readEData(string &fileName); // read the experiment data (connections and topology used)
     bool split(string input, char del, string &c);
 };

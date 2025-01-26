@@ -52,11 +52,16 @@ Topology::Topology(string& fileName, bool verbose){
     if (verbose) PrintLayout();
 }
 
-Topology::Topology(vector<vector<int>> connections, vector<vector<int>> location, int numENodes){
-    this->location = location;
-    this->connections = connections;
+Topology::Topology(vector<vector<int>> connections, vector<vector<int>> location, int nENodes, int tNNodes, int nNodes, int nCNodes){
+    this->tNumNodes = tNNodes;// record how mant nodes there are in the topology and of what type
+    this->numNodes = nNodes;
+    this->numCNodes = nCNodes;
+    this->numENodes = nENodes;
 
-    EdgeTraffic(numENodes, 100);
+    this->location = location;// record the locations of the nodes in the network
+    this->connections = connections;// set the connections of the network
+
+    EdgeTraffic(nENodes, 100);
     calculateDist();
 }
 
