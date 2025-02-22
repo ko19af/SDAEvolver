@@ -25,11 +25,10 @@ private:
     vector<vector<int>> location;// vector holding the location of the nodes in the network
     vector<vector<vector<int>>> networkCon;// vector holding all the network connections from a file
     vector<int> attTowers;// vector recording the towers being attacked
-    Topology T;
 
-    void selectAttackedTowers(int numTowers);
+    void selectAttackedTowers(int numTowers, Topology& T);
     void performTowerAttack();
-    void readEData(const auto filePath); // read the experiment data (connections and topology used)
+    Topology readEData(const std::filesystem::__cxx11::path& filePath); // read the experiment data (connections and topology used)
     bool split(string input, char del, string &c);
 };
 

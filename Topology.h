@@ -12,7 +12,7 @@ using namespace std;
 
 class Topology {
 public:
-    explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = true);
+    explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = false);
     explicit Topology(string& fileName, bool verbose = false);
     int ShortestPath(int position, vector<double> &sPath);
     bool setConnections(bool attacked, vector<int>& c);

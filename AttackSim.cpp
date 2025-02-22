@@ -11,11 +11,11 @@
 AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string path){
 
     for(const auto& entry : fs::directory_iterator(path)){// iterates over the files in the directory provided without modifying them
-        readEData(entry.path());// read the information in from the file
+        Topology T = readEData(entry.path());// read the information in from the file and set the topology
 
         string outputFName = "Attacked_" + string(entry.path());// create the file name that that will record the results
 
-        selectAttackedTowers(T.numNodes * attTowers);// select the towers being attacked in the simulation
+        selectAttackedTowers(T.numNodes * attTowers, T);// select the towers being attacked in the simulation
 
         performTowerAttack();// perform the DOS/DDOS attack that disables towers
 
@@ -32,7 +32,7 @@ AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string pa
  * @param filePath is the path of the file being read into the system
  */
 
-void AttackSim::readEData(const auto filePath){
+Topology AttackSim::readEData(const std::filesystem::__cxx11::path& filePath){
     string text;// holds text from file
     string tFile;// holds the topology file name
     ifstream ReadFile(filePath);// input file stream reading in the desired file
@@ -41,7 +41,7 @@ void AttackSim::readEData(const auto filePath){
 
     tFile = "Topologies/Layout_" + to_string(tFile[0] - '0' - 1) + ".txt";// get the topology file used for the experiment
 
-    this->T = Topology(tFile);// initialize the topology with the correct layout for the file
+    Topology T = Topology(tFile);// initialize the topology with the correct layout for the file
 
     vector<vector<int>> connections = vector<vector<int>>(T.tNumNodes, vector<int>(T.tNumNodes));// initialize connections matrix
 
@@ -64,6 +64,7 @@ void AttackSim::readEData(const auto filePath){
         }
     }
     ReadFile.close();// close the file being read
+    return T;// return the newly created Topology
 }
 
 /**
@@ -95,11 +96,11 @@ bool AttackSim::split(string input, char del, string& c){
  * @param attTowers is the number of towers being attacked in the simulation
  */
 
-void AttackSim::selectAttackedTowers(int numTowers){
+void AttackSim::selectAttackedTowers(int numTowers, Topology& T){
     vector<int> attackedTowers = vector<int>(T.tNumNodes, 0);// vector determing which towers are attacked
 
-    this->T.tNumNodes -= numTowers;// remove the number of deactivated towers from the total count and non cloud/edge node towers
-    this->T.numNodes -= numTowers;
+    T.tNumNodes -= numTowers;// remove the number of deactivated towers from the total count and non cloud/edge node towers
+    T.numNodes -= numTowers;
 
     random_device rd;// initialize random number generator
     mt19937 gen(rd());
