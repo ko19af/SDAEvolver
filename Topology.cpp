@@ -27,10 +27,11 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
 Topology::Topology(string& fileName, bool verbose){
     
     readLayout(fileName);// read in the file containing the topology
+    
     this->numENodes = 0;
     this->numCNodes = 0;
     this->numNodes = 0;
-    this->tNumNodes = 0; // calculate total number of nodes in Topology
+    this->tNumNodes = 0; // count the total number of nodes in the Topology
 
     this->location = vector<vector<int>>();// vector holding the y and x position of a node in the network
 
@@ -52,21 +53,8 @@ Topology::Topology(string& fileName, bool verbose){
     if (verbose) PrintLayout();
 }
 
-Topology::Topology(vector<vector<int>>& connections, vector<vector<int>>& location, int nENodes, int tNNodes, int nNodes, int nCNodes){
-    this->tNumNodes = tNNodes;// record how mant nodes there are in the topology and of what type
-    this->numNodes = nNodes;
-    this->numCNodes = nCNodes;
-    this->numENodes = nENodes;
-
-    this->location = location;// record the locations of the nodes in the network
-    this->connections = connections;// set the connections of the network
-
-    EdgeTraffic(nENodes, 100);
-    calculateDist();
-}
-
 /**
- * This method read a provided network layout and reads it into the program
+ * This method reads a provided network layout into the program
  * 
  * @param fileName is the name of the file being read into the system
  */
@@ -124,6 +112,10 @@ void Topology::EnergyConsumption(double transmissionRate, double recevingRate){
 
 void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
     
+    //10,000 Mb = 6,666,666 packets (assuming max packet size)
+    // 1 packet = 20 ~ 1,500 bytes
+    // 1,500 bytes = .0015 Mb
+
     this->data = vector<vector<double>>(tNumNodes);
     int dataStreams = 0;// variable to count the number of data streams
 
@@ -394,23 +386,26 @@ void Topology:: calculateDist(){
  * 
  * (For non-attacked networks)
  * 
+ * @param attacked decides if the filter is examaning an attacked network or not
  * @param c is the vector produced by the SDA detainling the connections present in the network
  * @return is the boolean determing if this network connects all edge nodes to their cloud nodes
 */
 
-bool Topology::setConnections(vector<int>& c){
-    this->connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));// 2-d vector representing connections between nodes
-
-    for (int y = 0; y < connections.size(); y++){// fill the connection matrix
-        for (int x = 0; x < y; x++){
-            if(y >= (numNodes+numENodes) && x < numENodes){// set connections between edge & cloud nodes to zero
-                connections[y][x] = 0;
-                connections[x][y] = 0;
-            }else{// set connection based on vector given from SDA
-                connections[y][x] = c[0];
-                connections[x][y] = c[0];
+bool Topology::setConnections(bool attacked, vector<int>& c){
+    
+    if(!attacked){// if network is not attacked
+        this->connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));// 2-d vector representing connections between nodes
+        for (int y = 0; y < connections.size(); y++){// fill the connection matrix
+            for (int x = 0; x < y; x++){
+                if(y >= (numNodes+numENodes) && x < numENodes){// set connections between edge & cloud nodes to zero
+                    connections[y][x] = 0;
+                    connections[x][y] = 0;
+                }else{// set connection based on vector given from SDA
+                    connections[y][x] = c[0];
+                    connections[x][y] = c[0];
+                }
+                c.erase(c.begin()); // remove node from checking
             }
-            c.erase(c.begin()); // remove node from checking
         }
     }
 
@@ -418,23 +413,6 @@ bool Topology::setConnections(vector<int>& c){
 
     for (int x = 0; x < numENodes; x++){// go through the edge nodes
         if(layer[x] == -1) return true;// if edge node is not connected to cloud node network is dead
-    }
-    
-    return false;// return true if all edge nodes connect to a cloud node
-}
-
-/**
- * This method sets the connections for an attacked network as the connections matix is alread set beforehand
- * 
- * (For attacked networks)
- */
-
-bool Topology::setConnections(){
-
-    LayerNodes();// layer the nodes in the network
-
-    for (int x = 0; x < numENodes; x++){// go through the edge nodes
-        if(layer[x] == -1) return true;// if an edge node is not connected to cloud node network is dead
     }
     
     return false;// return true if all edge nodes connect to a cloud node

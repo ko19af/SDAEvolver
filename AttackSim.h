@@ -11,26 +11,25 @@
 #include "Topology.h"
 #include "Steady.h"
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
 using namespace std;
 
 class AttackSim {
 public:
-    explicit AttackSim(string& fileName, bool verbose = false, int heurFunction = 0);
+    explicit AttackSim(int heurFunction = 0, double attTowers = .05, bool verbose = false, string& fileName);
 
 private:
     vector<vector<int>> network;// vector holding the network layout
     vector<vector<int>> location;// vector holding the location of the nodes in the network
     vector<vector<vector<int>>> networkCon;// vector holding all the network connections from a file
-    vector<int> attTowers;
+    vector<int> attTowers;// vector recording the towers being attacked
+    Topology T;
 
-    int numENodes;
-    int numCNodes;
-    int numNodes;
-    int tNumNodes;
-
-    void readLayout(string &fileName);
-    void performTowerAttack(int remTowers = 1);
-    void readEData(string &fileName); // read the experiment data (connections and topology used)
+    void selectAttackedTowers(int numTowers);
+    void performTowerAttack();
+    void readEData(const auto filePath); // read the experiment data (connections and topology used)
     bool split(string input, char del, string &c);
 };
 

@@ -3,90 +3,54 @@
 /**
  * Performs a cyberattack simulation on a provided network to determine its reslience to the attack
  * 
- * @param filename is the file holding information on the network being attacked
- * @param verbose is a boolean determining if the info should be printed
  * @param heurFunction decides which heurestic function should be used for the analysis
+ * @param attTowers is the percentage of towers being attacked in the network
+ * @param path is the directory holding the files with the completed runs being examined
+ * @param verbose is a boolean determining if the info should be printed
  */
-AttackSim::AttackSim(string& filename, bool verbose, int heurFunction){
-    readEData(filename);// read the information in from the file
+AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string& path){
 
-    string outputFName = "Attacked_" + filename;// create the file name that that will record the results
+    for(const auto& entry : fs::directory_iterator(path)){// iterates over the files in the directory provided without modifying them
+        readEData(entry.path());// read the information in from the file
 
-    performTowerAttack();// perform the DOS/DDOS attack that disables towers
+        string outputFName = "Attacked_" + string(entry.path());// create the file name that that will record the results
 
-    for(vector<vector<int>> connections : networkCon){
-        Topology T = Topology(connections, location, numENodes, tNumNodes, numNodes, numCNodes);// load info into topologies class
-        Steady(T, heurFunction, outputFName);// call steady to make use of heurestic methods in the class
-    }
-}
+        selectAttackedTowers(T.numNodes * attTowers);// select the towers being attacked in the simulation
 
-/**
- * This method reads a provided network layout from a file into the program
- * 
- * @param fileName is the name of the file being read into the system
- */
+        performTowerAttack();// perform the DOS/DDOS attack that disables towers
 
-void AttackSim::readLayout(string& fileName){
-    vector<vector<int>> network;
-    vector<int> row;
-    string text;
-    ifstream ReadFile(fileName);
-    
-    while (getline(ReadFile, text, '\n')){
-        stringstream ss(text);// create string stream with text delimited by newline character
-        while (getline(ss, text, '\t')) row.push_back(stoi(text));
-        network.push_back(row);
-        row.clear();
-    }
-    ReadFile.close();
-
-    this->numENodes = 0;
-    this->numCNodes = 0;
-    this->numNodes = 0;
-    this->tNumNodes = 0; // calculate total number of nodes in Topology
-
-    this->location = vector<vector<int>>();// vector holding the y and x position of a node in the network
-
-    for (int y = 0; y < network.size(); y++){// go through the rows
-        for (int x = 0; x < network[0].size(); x++){// go through the coloumns
-            if(network[y][x] != 0){// if network has a tower at that position
-                if(y == 0) numENodes++;// if at first layer of network increment number of edge nodes
-                else if(y > 0 && y < network.size()-1) numNodes++;// if in the middle layer increment number of tower nodes
-                else numCNodes++;// else increment number of cloud nodes
-                location.push_back({y, x});// record tower position in matrix
-                tNumNodes++;// increment total number of towers
-            }
+        for(vector<vector<int>> connections : networkCon){
+            T.connections = connections;//set the connections in the topology
+            Steady(T, heurFunction, outputFName); // call steady to make use of heurestic methods in the class
         }
     }
-
-    this->network = network;
 }
 
 /**
  * This method reads a provided connection layout and reads it into the program
  * 
- * @param fileName is the name of the file being read into the system
+ * @param filePath is the path of the file being read into the system
  */
 
-void AttackSim::readEData(string& fileName){
+void AttackSim::readEData(const auto filePath){
     string text;// holds text from file
     string tFile;// holds the topology file name
-    ifstream ReadFile(fileName);// input file stream reading in the desired file
+    ifstream ReadFile(filePath);// input file stream reading in the desired file
     for (int x = 0; x < 2; x++) getline(ReadFile, text); // get the second line from the file
     split(text, ':', tFile);// split the text from the data wanted for getting the topology file name
 
     tFile = "Topologies/Layout_" + to_string(tFile[0] - '0' - 1) + ".txt";// get the topology file used for the experiment
 
-    readLayout(tFile);// read the topology information
+    this->T = Topology(tFile);// initialize the topology with the correct layout for the file
 
-    vector<vector<int>> connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));// initialize connections matrix
+    vector<vector<int>> connections = vector<vector<int>>(T.tNumNodes, vector<int>(T.tNumNodes));// initialize connections matrix
 
     while(getline(ReadFile, text)){// read  rest of the lines from the file
         string c = "";// string holds splited part from the files text
         if(split(text, ':', c)){
-            for (int y = 0; y < tNumNodes; y++){// load connections vector into the connections matrix
+            for (int y = 0; y < T.tNumNodes; y++){// load connections vector into the connections matrix
                 for (int x = 0; x < y; x++){
-                    if(y >= (numNodes+numENodes) && x < numENodes){// set connections between edge & cloud nodes to zero
+                    if(y >= (T.numNodes+T.numENodes) && x < T.numENodes){// set connections between edge & cloud nodes to zero
                         connections[y][x] = 0;
                         connections[x][y] = 0;
                     }else{// set connection based on vector given from SDA
@@ -126,6 +90,31 @@ bool AttackSim::split(string input, char del, string& c){
 }
 
 /**
+ * This method randomly selects the towers that will be attacked in the simulation
+ * 
+ * @param attTowers is the number of towers being attacked in the simulation
+ */
+
+void AttackSim::selectAttackedTowers(int numTowers){
+    vector<int> attackedTowers = vector<int>(T.tNumNodes, 0);// vector determing which towers are attacked
+
+    this->T.tNumNodes -= numTowers;// remove the number of deactivated towers from the total count and non cloud/edge node towers
+    this->T.numNodes -= numTowers;
+
+    random_device rd;// initialize random number generator
+    mt19937 gen(rd());
+    uniform_int_distribution<> distrib(T.numENodes, (T.tNumNodes-T.numENodes-1));// define range to exclude the cloud and edge nodes
+
+    for (int x = 0; x < numTowers; x++){// for the number of towers being attacked
+        int aTow = 0;
+        do{
+            aTow = distrib(gen);// randomly select a tower to attack
+        } while (attackedTowers[aTow] == 1);// choose a different tower if it was alread selected
+        attackedTowers[aTow] = 1; // if tower is not already selected add to vector
+    }
+}
+
+/**
  * This method performs the DOS/DDOS attack variation that disables the towers in the network by removing the 
  * rows/coloumns from the connections vector representing these towers
  * 
@@ -133,24 +122,7 @@ bool AttackSim::split(string input, char del, string& c){
  * @param remTowers is the number of towers being disabled in the network for the simulation
  */
 
-void AttackSim::performTowerAttack(int remTowers){
-
-    vector<int> attTowers = vector<int>(tNumNodes, 0);// vector determing which towers are being attacked
-
-    this->tNumNodes -= remTowers;// remove the number of deactivated towers from the total count and non cloud/edge node towers
-    this->numNodes -= remTowers;
-
-    random_device rd;// initialize random number generator
-    mt19937 gen(rd());
-    uniform_int_distribution<> distrib(numENodes, (tNumNodes-numENodes-1));// define range to exclude the cloud and edge nodes
-
-    for (int x = 0; x < remTowers; x++){// for the number of towers being attacked
-        int aTow = 0;
-        do{
-            aTow = distrib(gen);// randomly select a tower to attack
-        } while (attTowers[aTow] == 1);// choose a different tower if it was alread selected
-        attTowers[aTow] = 1; // if tower is not already selected add to vector
-    }
+void AttackSim::performTowerAttack(){
 
     for(vector<vector<int>> connections : networkCon){// for each connections matrix
         for (int tow = 0; tow < attTowers.size(); tow++){// go through the vector containing the attacked towers

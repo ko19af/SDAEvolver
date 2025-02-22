@@ -15,12 +15,14 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    string file = "Output/Experiment_6250311000010.90000010.9000003020.txt";
-    AttackSim(file, false, 0);
 
-    exit(1);
+    if(atoi(argv[13])){// if the 13th console passed parameter is one initiate attack simulation
+        AttackSim(atoi(argv[12]), atof(argv[14]) / 100);// call attack sim and provide it with the appropriate parameters
+        return 0;// exit program
+    }
 
-    int numStates = 6;
+    srand(1);// seed the random number generator
+    int numStates = 6;// initialize the variables in case none are passed on the cmd line
     int numChars = 2;
     int popSize = 50;
     int tournSelector = 3;
@@ -33,8 +35,8 @@ int main(int argc, char* argv[]) {
     int runs = 30;
     int heurFunction = 2;
 
-    //collect hyper-parameters for the run
-    if(argc > 1){
+    
+    if(argc > 1){// collect hyper-parameters for the run (if provided)
     numStates = atoi(argv[1]);
     numChars = atoi(argv[2]);
     popSize = atoi(argv[3]);
@@ -48,8 +50,6 @@ int main(int argc, char* argv[]) {
     runs = atoi(argv[11]);
     heurFunction = atoi(argv[12]);
     }
-
-    srand(1); // seed the random number generator
 
     for (int t = 0; t < 5; t++){
         

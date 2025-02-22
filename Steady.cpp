@@ -158,7 +158,7 @@ bool Steady::necroticFilter(vector<int>& connections, Topology& T){
         pos++;// move position in vector
     } while (count <= necroticMax * T.tNumNodes && pos < connections.size());// while count is less than maximum and vector bounds are not exceeded
 
-    if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections(connections)) return true; // DEAD
+    if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections(false, connections)) return true; // DEAD
     else return false;// return false if member is within bounds and edge connects to cloud
 }
 
@@ -180,8 +180,8 @@ bool Steady::attNecroticFilter(Topology& T){
             if(T.connections[y][x] == 1) count++;// count the number of connections in the network
         }
     }
-
-    if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections()) return true; // DEAD
+    // rawConnections is not used, it was placed only to satisfy the methods need for a vector
+    if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections(true, rawConnections)) return true; // DEAD
     else return false;// return false if member is within bounds and edge connects to cloud
 }
 
