@@ -18,7 +18,7 @@ using namespace std;
 
 class AttackSim {
 public:
-    explicit AttackSim(int heurFunction = 0, double attTowers = .05, bool verbose = false, string& fileName);
+    explicit AttackSim(int heurFunction = 0, double attTowers = .05, bool verbose = false, string fileName = "Output");
 
 private:
     vector<vector<int>> network;// vector holding the network layout

@@ -8,7 +8,7 @@
  * @param path is the directory holding the files with the completed runs being examined
  * @param verbose is a boolean determining if the info should be printed
  */
-AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string& path){
+AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string path){
 
     for(const auto& entry : fs::directory_iterator(path)){// iterates over the files in the directory provided without modifying them
         readEData(entry.path());// read the information in from the file
