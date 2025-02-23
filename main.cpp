@@ -16,10 +16,10 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 
-    bool testAttack = true;// Remove when finished testing
+    bool testAttack = false;// Remove when finished testing
 
     if(testAttack || atoi(argv[13])){// if the 13th console passed parameter is one initiate attack simulation
-        AttackSim(atoi(argv[12]), atof(argv[14]) / 100);// call attack sim and provide it with the appropriate parameters
+        AttackSim(atoi(argv[12]), atof(argv[14]) / 100); // call attack sim and provide it with the appropriate parameters
         return 0;// exit program
     }
 

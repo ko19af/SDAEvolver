@@ -10,6 +10,7 @@
 #include <random>
 #include "Topology.h"
 #include "Steady.h"
+#include <fstream>
 
 #include <filesystem>
 namespace fs = std::filesystem;

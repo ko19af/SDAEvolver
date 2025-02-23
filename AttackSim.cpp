@@ -12,8 +12,10 @@ AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string pa
 
     for(const auto& entry : fs::directory_iterator(path)){// iterates over the files in the directory provided without modifying them
         Topology T = readEData(entry.path());// read the information in from the file and set the topology
+        
+        ofstream outputFile("Attacked_" + string(entry.path()));// create the file name that that will record the results
 
-        string outputFName = "Attacked_" + string(entry.path());// create the file name that that will record the results
+        outputFile << "Heurestic Function " << to_string(heurFunction) << "Ataacked Towers (%)" << setprecision(15) << attTowers << endl;
 
         selectAttackedTowers(T.numNodes * attTowers, T);// select the towers being attacked in the simulation
 
@@ -21,8 +23,9 @@ AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string pa
 
         for(vector<vector<int>> connections : networkCon){
             T.connections = connections;//set the connections in the topology
-            Steady(T, heurFunction, outputFName); // call steady to make use of heurestic methods in the class
+            Steady(T, heurFunction, outputFile); // call steady to make use of heurestic methods in the class
         }
+        outputFile.close();
     }
 }
 

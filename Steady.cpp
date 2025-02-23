@@ -381,14 +381,14 @@ Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int p
  *This constructor is for use in testing the network layout connections resilience to cyberattacks
  * @param T is the class holding the Topology being examined
  * @param heurFunction is the heurestic funciton being used for the examination
- * @param fName is the name of the file the results will be saved in
+ * @param fName is the output file stream the results will be written t0
  *
 */
 
-Steady::Steady(Topology& T, int heurFunction, string fName){
+Steady::Steady(Topology& T, int heurFunction, ofstream& fName){
 
-    this->heurFunction = heurFunction;
+    this->heurFunction = heurFunction;// set the heurestic function
 
-    if (attNecroticFilter(T)) cout << "Network is dead" << endl; // if the network is dead based on the attack necrotic filter criteria
-    else cout << "Fitness of network: " << CalcFitness(T) << endl; // else network is not dead, calculate its fitness
+    if (attNecroticFilter(T)) fName << "Network died" << endl; // if the network is dead based on the attack necrotic filter criteria
+    else fName << "Fitness of network: " << CalcFitness(T) << endl; // else network is not dead, calculate its fitness
 }

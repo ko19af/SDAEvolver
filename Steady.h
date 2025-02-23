@@ -14,7 +14,7 @@ using namespace std;
 class Steady {
     public:
         explicit Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
-        explicit Steady(Topology& T, int heurFunction, string fName);
+        explicit Steady(Topology& T, int heurFunction, ofstream& fName);
 
     private:
         double distanceFitness(Topology& T);
