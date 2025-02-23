@@ -16,14 +16,14 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 
-    bool testAttack = false;// Remove when finished testing
-
+    bool testAttack = true;// Remove when finished testing
+    srand(1);// seed the random number generator
+    
     if(testAttack || atoi(argv[13])){// if the 13th console passed parameter is one initiate attack simulation
         AttackSim(atoi(argv[12]), atof(argv[14]) / 100); // call attack sim and provide it with the appropriate parameters
         return 0;// exit program
     }
-
-    srand(1);// seed the random number generator
+    
     int numStates = 6;// initialize the variables in case none are passed on the cmd line
     int numChars = 2;
     int popSize = 50;
