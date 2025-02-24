@@ -22,11 +22,11 @@ AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string pa
         performTowerAttack();// perform the DOS/DDOS attack that disables towers
         int run = 1;
 
-        while(networkCon.size() > 0){
-                outputFile << "Run: " << run++ << endl;
-                T.connections = networkCon[0];         // set the connections in the topology
-                Steady(T, heurFunction, outputFile); // call steady to make use of heurestic methods in the class
-                networkCon.erase(networkCon.begin());
+        while(networkCon.size() > 0){// while there is a network to examine
+            outputFile << "Run: " << run++ << endl;
+            T.connections = networkCon[0];         // set the connections in the topology
+            Steady(T, heurFunction, outputFile); // call steady to make use of heurestic methods in the class
+            networkCon.erase(networkCon.begin());
         }
         outputFile.close();
     }
