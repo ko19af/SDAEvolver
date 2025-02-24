@@ -9,22 +9,24 @@
  * @param verbose is a boolean determining if the info should be printed
  */
 AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string path){
-
-    for(const auto& entry : fs::directory_iterator(path)){// iterates over the files in the directory provided without modifying them
+    
+    for (const auto &entry : fs::directory_iterator(path)){// iterates over the files in the directory provided without modifying them
         Topology T = readEData(entry.path());// read the information in from the file and set the topology
 
         string file = string(entry.path()).erase(0, 7);// get the name of the file being attacked
         ofstream outputFile("Output_2/Attacked_" + file);// create the file recording the results
 
         outputFile << "Heurestic Function: " << to_string(heurFunction) << "\t Attacked Towers (%): " << setprecision(15) << attTowers << endl;
-
         selectAttackedTowers(T.numNodes * attTowers, T);// select the towers being attacked in the simulation
 
         performTowerAttack();// perform the DOS/DDOS attack that disables towers
+        int run = 1;
 
-        for(vector<vector<int>> connections : networkCon){
-            T.connections = connections;//set the connections in the topology
-            Steady(T, heurFunction, outputFile); // call steady to make use of heurestic methods in the class
+        while(networkCon.size() > 0){
+                outputFile << "Run: " << run++ << endl;
+                T.connections = networkCon[0];         // set the connections in the topology
+                Steady(T, heurFunction, outputFile); // call steady to make use of heurestic methods in the class
+                networkCon.erase(networkCon.begin());
         }
         outputFile.close();
     }
