@@ -130,12 +130,11 @@ void AttackSim::selectAttackedTowers(int numTowers, Topology& T){
  */
 
 void AttackSim::performTowerAttack(){
-
     for(vector<vector<int>> connections : networkCon){// for each connections matrix
         for (int tow = 0; tow < attTowers.size(); tow++){// go through the vector containing the attacked towers
             if(attTowers[tow] == 1){// if the tower is being attacked
-                connections.erase(connections.begin() + tow); // remove the deleted towers row
-                for(vector<int> row : connections) row.erase(row.begin() + tow);// remove the deleted towers coloumn
+                fill(connections[tow].begin(), connections[tow].end(), 0);// set the connectctions in the attacked tower as zero
+                for(vector<int> row : connections) row[tow] = 0;// remove the connections in the attacked towers coloumn
             }
         }
     }
