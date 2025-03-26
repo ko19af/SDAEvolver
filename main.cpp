@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     int mutOperator = 1;
     double mutRate = 0.9;
     int runs = 30;
-    int heurFunction = 2;
+    int heurFunction = 0;
 
     
     if(argc > 1){// collect hyper-parameters for the run (if provided)

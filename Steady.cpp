@@ -215,30 +215,30 @@ double Steady::distanceFitness(Topology& T){
     int numC = 0;// number of connections
 
     for (int x = 0; x < T.tNumNodes; x++){ // for all the nodes
-        for (int y = 0; y < x; y++){ // for all the nodes it could connect to
+        for (int y = 0; y < x; y++){// for all the nodes it could connect to
             if(T.connections[x][y] != 0){// if there is a connection between the nodes
                 val += T.distance[x][y];// add the distance to the val
-                numC++;// increment number of connections present in the network
+                numC++; // increment number of connections present in the network
             }
         }
     }
 
-        // for (int x = 0; x < T.numENodes; x++){// for each edge node
-        //     vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
-        //     sPath[x] = 0;// set distance to starting edge node to zero
-        //     T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
+    // for (int x = 0; x < T.numENodes; x++){// for each edge node
+    //     vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
+    //     sPath[x] = 0;// set distance to starting edge node to zero
+    //     T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
 
-        //     int count = 0;// number of cloud nodes edge node connects to
-        //     double dist = 0;// total distance from edge node to cloud node
-        //     for (int i = 0; i < T.numCNodes; i++){
-        //         if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
-        //             dist += sPath[T.tNumNodes - 1 - i];// add distance
-        //             count++;// increment connection count
-        //         }
-        //       }
-        //     if(count != 0) val += dist / count;// add average connection distance to total distance value
-        // }
-        return val/numC; // return the average distance of all connections
+    //     int count = 0;// number of cloud nodes edge node connects to
+    //     double dist = 0;// total distance from edge node to cloud node
+    //     for (int i = 0; i < T.numCNodes; i++){
+    //         if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
+    //             dist += sPath[T.tNumNodes - 1 - i];// add distance
+    //             count++;// increment connection count
+    //         }
+    //       }
+    //     if(count != 0) val += dist / count;// add average connection distance to total distance value
+    // }
+    return val / numC; // return the average distance of connections in the network
 }
 
 /**

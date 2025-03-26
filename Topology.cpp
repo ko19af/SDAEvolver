@@ -366,15 +366,13 @@ void Topology:: calculateDist(){
     for (int y = 0; y < tNumNodes; y++){// select origin node
         for (int x = 0; x < y; x++){// select the node we want to calculate distance to
             
-            int x1 = location[y][0];//retreive location of nodes in the network
-            int y1 = location[y][1];
-            int x2 = location[x][0];
-            int y2 = location[x][1];
+            int y1 = location[y][0];//retreive location of nodes in the network
+            int x1 = location[y][1];
+            int y2 = location[x][0];
+            int x2 = location[x][1];
 
-            double dist = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)); // caluclate euclidean distance between the nodes
-
-            distance[y][x] = dist;// set distance values between the nodes
-            distance[x][y] = dist;
+            distance[y][x] = distance[x][y] = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2));// set distance values between the nodes
+             
         }
     }
 }
