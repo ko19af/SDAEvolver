@@ -14,8 +14,9 @@ class Topology {
 public:
     explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = false);
     explicit Topology(string& fileName, bool verbose = false);
-    int ShortestPath(int position, vector<double> &sPath);
-    bool setConnections(bool attacked, vector<int>& c);
+    void ShortestPath(int position, vector<double> &sPath, vector<vector<int>> &nodes);
+    double MinimumNetwork(vector<vector<int>> &newNet);
+    bool setConnections(bool attacked, vector<int> &c);
     void configNet(int &heurFunction, bool verbose = false);
 
     /**
@@ -38,6 +39,9 @@ public:
     bool analyzeData;
 
 private:
+    void makeEdges(auto &edges);
+    bool find(int i, vector<int> &parent);
+    void unite(int x, int y, vector<int> &parent, vector<int> &rank);
     void readLayout(string &fileName);
     void calculateDist();
     void PrintLayout();

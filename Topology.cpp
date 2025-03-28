@@ -340,20 +340,93 @@ void Topology::ChooseNodeLocations(int x, int y, int numNodes){
  * @param sPath is the shortest path from the start node to any other node in the network it has a path to
 */
 
-int Topology::ShortestPath(int position, vector<double> &sPath){// initialize distance from start node to all others at max value)
-
-    for (int x = 0; x < connections.size(); x++){ // go through row recording the connections for current position
-        if (connections[position][x] == 1 && position != x){ // if there is a connection to explore
-            
-            int dist = distance[position][x];// get the distance between the nodes
-            
-            if (dist + sPath[position] < sPath[x]){// compare distance
-                sPath[x] = dist + sPath[position];// if shorter path update distance in shorter path vector
-                ShortestPath(x, sPath);// recalculate distance to all other nodes from that node to find shorter paths
+void Topology::ShortestPath(int src, vector<double> &sPath, vector<vector<int>> &nodes){// initialize distance from start node to all others at max value)
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;
+    pq.push(make_pair(0, src));// push starting point with inital distance of zero into priority queue
+    sPath[src] = 0;// set initial distance to source as zero
+    while(!pq.empty()){// while there is still a node to examine
+        int u = pq.top().second;// get the node being examined from the pq
+        pq.pop();// remove element from the queue
+        for (int x = 0; x < tNumNodes; x++){// look at all of the nodes connections
+            if(connections[u][x] == 0) continue;// if there is no connection to that node skip it
+            double weight = distance[u][x];// reterive distance to connected node
+            if(sPath[x] > sPath[u] + weight){// if there is a shorter path to that node
+                sPath[x] = sPath[u] + weight;// update the shorter path
+                pq.push(make_pair(sPath[x], x));// push the update onto the queue
+                if(!nodes[u].empty()) nodes[x] = (nodes[u]);// set the path to get from node x to the same as node u (as long as its not empty)
+                nodes[x].push_back(u);// add node u to the path as it must be traversed to reach node x
             }
         }
     }
-    return 0;
+}
+
+/**
+ * This method creates the priority queue holding the edges of the network in non-decreasing order
+ * @param edges is the priority queue consisting of tuples contianing the edges and their distance
+ */
+
+void Topology::makeEdges(auto &edges){
+    for (int y = 0; y < tNumNodes; y++){//for all the nodes
+        for (int x = 0; x < y; x++){// go through their connections, stopping at thier own column
+            // if there is no edge then skip, else create edge and add to the queue
+            (connections[y][x]) ? 0 continue : edges.push_back(make_tuple(distance[y][x], y, x))
+        }
+    }
+}
+
+/**
+ * This method determines the which connections are required at minimum to connect the network
+ * @param newNet is the new network produced by the MST algorithm
+ */
+
+double Topology::MinimumNetwork(vector<vector<int>> &newNet){
+    priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<tuple<int,int,int>>> edges;
+    makeEdges(edges);// make the edges of the network
+    double cost = 0, count = 0;
+
+    vector<int> parent(tNumNodes), rank(tNumNodes, 1);// initialize the parents of the nodes and thier ranks
+    for (int x = 0; x < parent.size(); x++) parent[x] = x;// initialize parent of nodes as themselves
+
+    while(!edges.empty()){// while there is an edge to examine
+        int x = get<0>(edges.top()), y = get<1>(edges.top()), w = get<2>(edges.top());// get info about edge from tuple
+        edges.pop();// remove edge
+
+        int parentx = find(x, parent), parenty = find(y, parent);// find the parents of the two nodes
+
+        if(parentx != parenty){// if the nodes do not have a common parent (i.e are disconnected)
+            unite(parentx, parenty, parent, rank);// set the nodes to have a common parent
+            //cost+=w;// include the cost of the added edge
+            newNet[y][x] = newNet[x][y] = 1;// set the connection in the new network
+            if (++count == tNumNodes - 1) break;// if reached minimum number of edges for the network
+        }else{
+            cost += w;// add the cost of the unused connection
+        }
+    }
+    return cost;// return cost of mimimum spanning network
+}
+
+/**
+ * This method determines the parent of a node by backtracking to the node that is a parent of itself
+ * @param i is the node being examined
+ * @param parent is the vector recording which node has which parent
+ */
+
+bool Topology::find(int i, vector<int> &parent){
+    return (parent[i] == i) ? i : (parent[i] = find(parent[i], parent));
+}
+
+/**
+ * This method sets the parent of two nodes in the network so they are the same, thus adding the edge to the min network
+ * @param s1 is the parent of one node
+ * @param s2 is the parent of the other node
+ * @param parent is the vector recording the parents of the nodes
+ * @param rank is the vector recording the ranks of the nodes
+ */
+
+void Topology::unite(int s1, int s2, vector<int> &parent, vector<int> &rank) {
+    if (rank[s1] < rank[s2]) parent[s1] = s2;// if node xs parent has a better rank it becomes the parent of node y
+    else if (rank[s1] > rank[s2]) parent[s2] = s1;// vice versa of previous statement
+    else parent[s2] = s1, rank[s1]++;// if they have the same rank then it does not matter
 }
 
 /**

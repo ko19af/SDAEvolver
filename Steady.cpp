@@ -212,33 +212,55 @@ double Steady::dataFitness(Topology& T){
 
 double Steady::distanceFitness(Topology& T){
     double val = 0;// total connection distance in the network
-    int numC = 0;// number of connections
+    //int numC = 0;// number of connections
 
-    for (int x = 0; x < T.tNumNodes; x++){ // for all the nodes
-        for (int y = 0; y < x; y++){// for all the nodes it could connect to
-            if(T.connections[x][y] != 0){// if there is a connection between the nodes
-                val += T.distance[x][y];// add the distance to the val
-                numC++; // increment number of connections present in the network
+    //for (int x = 0; x < T.tNumNodes; x++){ // for all the nodes
+        //for (int y = 0; y < x; y++){// for all the nodes it could connect to
+            //if(T.connections[x][y] != 0){// if there is a connection between the nodes
+                //val += T.distance[x][y];// add the distance to the val
+                //numC++; // increment number of connections present in the network
+            //}
+        //}
+    //}
+
+    // vector<vector<int>> newNet(tNumNodes, vector<int>(tNumNodes));
+    // int val = minimumNetwork(newNet);
+    vector<pair<int, int>> paths;// vector holding the edge connecting the cloud nodes to the edge
+    for (int x = 0; x < T.numENodes; x++){// for each edge node
+        vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
+        vector<vector<int>> nodes(T.tNumNodes);// records the nodes used for the shortest path
+        sPath[x] = 0;// set distance to starting edge node to zero
+        T.ShortestPath(x, sPath, nodes);// calculate shortest path to all nodes in topology from selected edge node
+
+        createPath(paths, nodes, x, T);// coalice all the edges being used to connect the edge to the cloud
+
+        int count = 0;// number of cloud nodes edge node connects to
+        double dist = 0;// total distance from edge node to cloud node
+        for (int i = 0; i < T.numCNodes; i++){
+            if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
+                dist += sPath[T.tNumNodes - 1 - i];// add distance
+                count++;// increment connection count
+            }
+           }
+        if(count != 0) val += dist / count;// add average connection distance to total distance value
+    }
+    return val;
+    // return val / numC; // return the average distance of connections in the network
+}
+
+void Steady::createPath(vector<pair<int, int>> &paths, vector<vector<int>> &nodes, int src, Topology &T){
+    for (int x = 0; x < T.numCNodes; x++){// for each cloud node
+        for (int e = 0; e < nodes[T.tNumNodes - 1 - x].size(); e++){// for each node on the path to the edge
+            if(e == 0){// if it is the first edge
+                paths.push_back(make_pair(src, nodes[T.tNumNodes - 1 - x][e]));// set origin point as src
+            }else{
+                pair<int, int> edge = make_pair(paths[paths.size() - 1].second, nodes[T.tNumNodes - 1 - x][e]);// set origin point as end point of last added edge
+                if (count(paths.begin(), paths.end(), edge) == 0){// if edge is not already recorded
+                    paths.push_back(edge);// add edge to edges used to transfer data
+                }
             }
         }
     }
-
-    // for (int x = 0; x < T.numENodes; x++){// for each edge node
-    //     vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
-    //     sPath[x] = 0;// set distance to starting edge node to zero
-    //     T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
-
-    //     int count = 0;// number of cloud nodes edge node connects to
-    //     double dist = 0;// total distance from edge node to cloud node
-    //     for (int i = 0; i < T.numCNodes; i++){
-    //         if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
-    //             dist += sPath[T.tNumNodes - 1 - i];// add distance
-    //             count++;// increment connection count
-    //         }
-    //       }
-    //     if(count != 0) val += dist / count;// add average connection distance to total distance value
-    // }
-    return val / numC; // return the average distance of connections in the network
 }
 
 /**
