@@ -7,7 +7,6 @@
 #include <filesystem>
 #include "SDA.h"
 #include "Topology.h"
-#include "Generational.h"
 #include "AttackSim.h"
 #include "Steady.h"
 #include "vector"
@@ -17,7 +16,7 @@ using namespace std;
 int main(int argc, char* argv[]) {
     srand(1);// seed the random number generator
     
-    if(true || atoi(argv[13])){// if the 13th console passed parameter is one initiate attack simulation
+    if(atoi(argv[13])){// if the 13th console passed parameter is one initiate attack simulation
         AttackSim(atoi(argv[12]), atof(argv[14]) / 100); // call attack sim and provide it with the appropriate parameters
         return 0;// exit program
     }
@@ -75,8 +74,7 @@ int main(int argc, char* argv[]) {
 
         for (int x = 0; x < runs; x++){
             MyFile << "Run: " << x + 1 << endl;
-            if(gaOperator == 0) Generational(T, MyFile, numStates, numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
-            else if(gaOperator == 1) Steady(T, MyFile, numStates,numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
+            Steady(T, MyFile, numStates,numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
         }
         MyFile.close();
     }

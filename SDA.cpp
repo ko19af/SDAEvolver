@@ -430,6 +430,13 @@ void SDA::print(ostream &to = cout) {
     if (verbose) cout << "SDA Printed." << endl;
 }
 
+/**
+ * This constructor performs the same functionality as the former,
+ * but instead of desining a new SDA it loads a pre-built SDA from a vector of strings
+ * 
+ * @param toConvert is the pre-built SDA that needs to be converted into a useable SDA
+ */
+
 SDA::SDA(int numStates, int numChars, int maxRespLen, int outputLen, vector<string> toConvert, int initState, bool verbose) {
     initChar = -1;
     this->numStates = numStates;

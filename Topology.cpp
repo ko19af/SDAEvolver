@@ -347,7 +347,7 @@ void Topology::ChooseNodeLocations(int x, int y, int numNodes){
  * @param sPath is the shortest path from the start node to any other node in the network it has a path to
 */
 
-void Topology::ShortestPath(int src, vector<double> &sPath, vector<vector<int>> &nodes){// initialize distance from start node to all others at max value)
+void Topology::ShortestPath(int src, vector<double> &sPath, vector<vector<int>> &nodes, vector<vector<int>> &newC){
     priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;
     pq.push(make_pair(0, src));// push starting point with inital distance of zero into priority queue
     sPath[src] = 0;// set initial distance to source as zero
@@ -355,7 +355,7 @@ void Topology::ShortestPath(int src, vector<double> &sPath, vector<vector<int>> 
         int u = pq.top().second;// get the node being examined from the pq
         pq.pop();// remove element from the queue
         for (int x = 0; x < tNumNodes; x++){// look at all of the nodes connections
-            if(connections[u][x] == 0) continue;// if there is no connection to that node skip it
+            if(newC[u][x] == 0) continue;// if there is no connection to that node skip it
             double weight = distance[u][x];// reterive distance to connected node
             if(sPath[x] > sPath[u] + weight){// if there is a shorter path to that node
                 sPath[x] = sPath[u] + weight;// update the shorter path
@@ -375,41 +375,41 @@ void Topology::ShortestPath(int src, vector<double> &sPath, vector<vector<int>> 
 void Topology::makeEdges(auto &edges){
     for (int y = 0; y < tNumNodes; y++){//for all the nodes
         for (int x = 0; x < y; x++){// go through their connections, stopping at thier own column
-            // if there is no edge then skip, else create edge and add to the queue
-            if(!connections[y][x]) edges.push(make_tuple(distance[y][x], y, x));
+            if(connections[y][x])
+             edges.push(make_tuple(distance[y][x], x, y));// if there is an edge, record it and add to the queue
         }
     }
 }
+
+class my_greater {
+    public:
+      bool operator() (const auto& arg1, const auto& arg2) const {return get<0>(arg1) > get<0>(arg2);
+          return false;
+      }
+    };
 
 /**
  * This method determines the which connections are required at minimum to connect the network
  * @param newNet is the new network produced by the MST algorithm
  */
 
-double Topology::MinimumNetwork(vector<vector<int>> &newNet){
-    priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<tuple<int,int,int>>> edges;
+void Topology::minimumNetwork(vector<vector<int>> &newNet){
+    priority_queue<tuple<double,int,int>, vector<tuple<double,int,int>>, my_greater> edges;
     makeEdges(edges);// make the edges of the network
-    double cost = 0, count = 0;
-
+    double count = 0;
     vector<int> parent(tNumNodes), rank(tNumNodes, 1);// initialize the parents of the nodes and thier ranks
     for (int x = 0; x < parent.size(); x++) parent[x] = x;// initialize parent of nodes as themselves
-
     while(!edges.empty()){// while there is an edge to examine
-        int x = get<0>(edges.top()), y = get<1>(edges.top()), w = get<2>(edges.top());// get info about edge from tuple
+        int x = get<1>(edges.top()), y = get<2>(edges.top()); // get info about edge from tuple
         edges.pop();// remove edge
-
-        int parentx = find(x, parent), parenty = find(y, parent);// find the parents of the two nodes
-
+        int parentx = find(x, parent);
+        int parenty = find(y, parent); // find the parents of the two nodes
         if(parentx != parenty){// if the nodes do not have a common parent (i.e are disconnected)
             unite(parentx, parenty, parent, rank);// set the nodes to have a common parent
-            //cost+=w;// include the cost of the added edge
             newNet[y][x] = newNet[x][y] = 1;// set the connection in the new network
             if (++count == tNumNodes - 1) break;// if reached minimum number of edges for the network
-        }else{
-            cost += w;// add the cost of the unused connection
         }
     }
-    return cost;// return cost of mimimum spanning network
 }
 
 /**
@@ -419,7 +419,7 @@ double Topology::MinimumNetwork(vector<vector<int>> &newNet){
  */
 
 bool Topology::find(int i, vector<int> &parent){
-    return (parent[i] == i) ? i : (parent[i] = find(parent[i], parent));
+    return (parent[i] == i) ? i : (find(parent[i], parent));
 }
 
 /**
@@ -442,15 +442,12 @@ void Topology::unite(int s1, int s2, vector<int> &parent, vector<int> &rank) {
 
 void Topology:: calculateDist(){
     this->distance = vector<vector<double>>(tNumNodes, vector<double>(tNumNodes)); // vector for recording the distance
-    
     for (int y = 0; y < tNumNodes; y++){// select origin node
         for (int x = 0; x < y; x++){// select the node we want to calculate distance to
-            
             int y1 = location[y][0];//retreive location of nodes in the network
             int x1 = location[y][1];
             int y2 = location[x][0];
             int x2 = location[x][1];
-
             distance[y][x] = distance[x][y] = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2));// set distance values between the nodes
              
         }

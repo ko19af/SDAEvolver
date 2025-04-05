@@ -212,40 +212,30 @@ double Steady::dataFitness(Topology& T){
 
 double Steady::distanceFitness(Topology& T){
     double val = 0;// total connection distance in the network
-    //int numC = 0;// number of connections
+    int totalD = 0;// total connection distacne in the network
 
-    //for (int x = 0; x < T.tNumNodes; x++){ // for all the nodes
-        //for (int y = 0; y < x; y++){// for all the nodes it could connect to
-            //if(T.connections[x][y] != 0){// if there is a connection between the nodes
-                //val += T.distance[x][y];// add the distance to the val
-                //numC++; // increment number of connections present in the network
-            //}
-        //}
-    //}
-
-    // vector<vector<int>> newNet(tNumNodes, vector<int>(tNumNodes));
-    // int val = minimumNetwork(newNet);
-    vector<pair<int, int>> paths;// vector holding the edge connecting the cloud nodes to the edge
-    for (int x = 0; x < T.numENodes; x++){// for each edge node
-        vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
-        vector<vector<int>> nodes(T.tNumNodes);// records the nodes used for the shortest path
-        sPath[x] = 0;// set distance to starting edge node to zero
-        T.ShortestPath(x, sPath, nodes);// calculate shortest path to all nodes in topology from selected edge node
-
-        createPath(paths, nodes, x, T);// coalice all the edges being used to connect the edge to the cloud
-
-        int count = 0;// number of cloud nodes edge node connects to
-        double dist = 0;// total distance from edge node to cloud node
-        for (int i = 0; i < T.numCNodes; i++){
-            if(sPath[T.tNumNodes - 1 - i] < DBL_MAX){// if there exists a path from the edge node to cloud node
-                dist += sPath[T.tNumNodes - 1 - i];// add distance
-                count++;// increment connection count
-            }
-           }
-        if(count != 0) val += dist / count;// add average connection distance to total distance value
+    for (int x = 0; x < T.tNumNodes; x++){// get the total distance in the network
+        for (int y = 0; y < x; y++) {
+            if(T.connections[x][y] != 0) totalD += T.distance[x][y];// sum all the distances between connected nodes
+        }
     }
+
+    vector<vector<int>> newNet(T.tNumNodes, vector<int>(T.tNumNodes));// new network with minimum connections
+    T.minimumNetwork(newNet);// kursk's algorithm to identify minimum necessary connections
+
+    vector<pair<int, int>> paths;// vector holding the edge connecting the cloud nodes to the edge
+    
+    for (int x = 0; x < T.numENodes; x++){// for each edge node find the shortest path to a cloud node in the minimum network
+        vector<double> sPath(T.tNumNodes, DBL_MAX);// vector recording distance from edge node to all other nodes
+        vector<vector<int>> nodes(T.tNumNodes);// record nodes used for the shortest path
+        sPath[x] = 0;// set distance to starting edge node to zero
+        T.ShortestPath(x, sPath, nodes, newNet);// calculate shortest path to all nodes in topology from selected edge node
+        createPath(paths, nodes, x, T);// coalice all the edges being used to connect the edge to the cloud
+    }
+
+    for(auto path : paths) val += T.distance[path.first][path.second];// record the distance from the minimum path
+
     return val;
-    // return val / numC; // return the average distance of connections in the network
 }
 
 void Steady::createPath(vector<pair<int, int>> &paths, vector<vector<int>> &nodes, int src, Topology &T){
@@ -288,8 +278,7 @@ int Steady::PrintPopFits(ostream &outStrm, vector<double> &popFits) {
     outStrm << "Fitness Values: ";
     bool first = true;
 
-    for (int fit = 0; fit < popFits.size(); fit++){// for each entry in the popFits vector
-       
+    for (int fit = 0; fit < popFits.size(); fit++){// for each entry in the popFits vector       
         if(dead[fit]){// if member of population is dead
             popFits[fit] = popWorstFit;// set its fitness value to the worst value
             continue;// don't print
