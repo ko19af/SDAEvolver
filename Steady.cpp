@@ -222,9 +222,7 @@ double Steady::distanceFitness(Topology& T){
 
     vector<vector<int>> newNet(T.tNumNodes, vector<int>(T.tNumNodes));// new network with minimum connections
     T.minimumNetwork(newNet);// kursk's algorithm to identify minimum necessary connections
-
     vector<pair<int, int>> paths;// vector holding the edge connecting the cloud nodes to the edge
-    
     for (int x = 0; x < T.numENodes; x++){// for each edge node find the shortest path to a cloud node in the minimum network
         vector<double> sPath(T.tNumNodes, DBL_MAX);// vector recording distance from edge node to all other nodes
         vector<vector<int>> nodes(T.tNumNodes);// record nodes used for the shortest path
@@ -232,23 +230,16 @@ double Steady::distanceFitness(Topology& T){
         T.ShortestPath(x, sPath, nodes, newNet);// calculate shortest path to all nodes in topology from selected edge node
         createPath(paths, nodes, x, T);// coalice all the edges being used to connect the edge to the cloud
     }
-
     for(auto path : paths) val += T.distance[path.first][path.second];// record the distance from the minimum path
-
     return val;
 }
 
 void Steady::createPath(vector<pair<int, int>> &paths, vector<vector<int>> &nodes, int src, Topology &T){
     for (int x = 0; x < T.numCNodes; x++){// for each cloud node
-        for (int e = 0; e < nodes[T.tNumNodes - 1 - x].size(); e++){// for each node on the path to the edge
-            if(e == 0){// if it is the first edge
-                paths.push_back(make_pair(src, nodes[T.tNumNodes - 1 - x][e]));// set origin point as src
-            }else{
-                pair<int, int> edge = make_pair(paths[paths.size() - 1].second, nodes[T.tNumNodes - 1 - x][e]);// set origin point as end point of last added edge
-                if (count(paths.begin(), paths.end(), edge) == 0){// if edge is not already recorded
-                    paths.push_back(edge);// add edge to edges used to transfer data
-                }
-            }
+        nodes[T.tNumNodes - 1 - x].push_back(T.tNumNodes - x);// push edge node onto the path
+        for (int e = 0; e < nodes[T.tNumNodes - 1 - x].size() - 1; e++){                                                                                               // for each node on the path to the edge
+            pair<int, int> edge = make_pair(nodes[T.tNumNodes - 1 - x][e], nodes[T.tNumNodes - 1 - x][e+1]);// set origin point as end point of last added edge
+            if (count(paths.begin(), paths.end(), edge) == 0) paths.push_back(edge);// if edge is not recorded, add it
         }
     }
 }

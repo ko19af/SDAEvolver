@@ -373,16 +373,14 @@ void Topology::ShortestPath(int src, vector<double> &sPath, vector<vector<int>> 
  */
 
 void Topology::makeEdges(auto &edges){
-    for (int y = 0; y < tNumNodes; y++){//for all the nodes
+    for (int y = 0; y < tNumNodes; y++){// for all the nodes
         for (int x = 0; x < y; x++){// go through their connections, stopping at thier own column
-            if(connections[y][x])
-                if(edges.empty()){
-                    edges.push_back(make_tuple(distance[y][x], x, y));
-                    continue;
-                }
-                for (int c = 0; x < edges.size(); c++){
-                    if(get<0>(edges[c]) > distance[y][x]) edges.insert(edges.begin() + c, make_tuple(distance[y][x], x, y));
-                }
+            if(connections[y][x]){
+                int c = 0;
+                while(c < edges.size() && get<0>(edges[c]) < distance[y][x]) c++;
+                if(c == edges.size()) edges.push_back(make_tuple(distance[y][x], x, y));
+                else edges.insert(edges.begin() + c, make_tuple(distance[y][x], x, y));
+            }
         }
     }
 }
