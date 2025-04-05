@@ -178,8 +178,9 @@ double Generational::distanceFitness(Topology& T){
     double val = 0;
     for (int x = 0; x < T.numENodes; x++){// for each edge node
         vector<double> sPath(T.tNumNodes, DBL_MAX);// create vector to record distance from edge node to all other nodes
+        vector<vector<int>> nodes(T.tNumNodes);
         sPath[x] = 0;// set distance to starting edge node to zero
-        T.ShortestPath(x, sPath);// calculate shortest path to all nodes in topology from selected edge node
+        T.ShortestPath(x, sPath, nodes);// calculate shortest path to all nodes in topology from selected edge node
 
         int count = 0;// number of cloud nodes edge node connects to
         double dist = 0;// total distance from edge node to cloud node

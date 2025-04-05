@@ -17,7 +17,7 @@ using namespace std;
 int main(int argc, char* argv[]) {
     srand(1);// seed the random number generator
     
-    if(atoi(argv[13])){// if the 13th console passed parameter is one initiate attack simulation
+    if(true || atoi(argv[13])){// if the 13th console passed parameter is one initiate attack simulation
         AttackSim(atoi(argv[12]), atof(argv[14]) / 100); // call attack sim and provide it with the appropriate parameters
         return 0;// exit program
     }
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
         " gaOperator: " << gaOperator << " numGen: " << numGen <<
         " crossOp: " << crossOp  << " crossRate(%): " << 
         setprecision(15) << crossRate << " mutationOperator: " <<
-            mutOperator << " mutationRate(%):  " << setprecision(15) <<
+            mutOperator << " mutationRate(%): " << setprecision(15) <<
             mutRate <<  " Heurestic: " << heurFunction << " Topology: " << t << " runs: " << runs << endl;
 
         MyFile << "Topology: " << t + 1 << endl;

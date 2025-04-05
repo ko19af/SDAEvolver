@@ -25,16 +25,28 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
 }
 
 Topology::Topology(string& fileName, bool verbose){
-    
     readLayout(fileName);// read in the file containing the topology
-    
+    countNodes();// count number and type of nodes in the network and initialize data streams and calculate distance
+    if (verbose) PrintLayout();
+}
+
+
+Topology::Topology(vector<vector<int>> network){
+    this->network = network;
+    countNodes();
+}
+
+/**
+ * This method counts the number and types of nodes in the network and, when done counting,
+ * initializes the data data streams in the network and calculates the distance between nodes
+ */
+
+void Topology::countNodes(){
     this->numENodes = 0;
     this->numCNodes = 0;
     this->numNodes = 0;
     this->tNumNodes = 0; // count the total number of nodes in the Topology
-
     this->location = vector<vector<int>>();// vector holding the y and x position of a node in the network
-
     for (int y = 0; y < network.size(); y++){// go through the rows
         for (int x = 0; x < network[0].size(); x++){// go through the coloumns
             if(network[y][x] != 0){// if network has a tower at that position
@@ -46,11 +58,8 @@ Topology::Topology(string& fileName, bool verbose){
             }
         }
     }
-
     EdgeTraffic(numENodes, 100);// distribute the traffic to the edge nodes
     calculateDist();// calculate the distance bettwen the nodes
-
-    if (verbose) PrintLayout();
 }
 
 /**
@@ -117,17 +126,15 @@ void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
     // 1,500 bytes = .0015 Mb
 
     this->data = vector<vector<double>>(tNumNodes);
-    int dataStreams = 0;// variable to count the number of data streams
 
     for (int x = 0; x < numStarts; x++){//for each starting node
         double output = 0;// record how much data is being ouputed at the node
-        while(output < maxOut){// while the ouput from the node is less than the max ouput
+        do{// while the ouput from the node is less than the max ouput
             double d = round((rand()/(double)RAND_MAX)*(upper-lower)+lower);// randomly generate a value in the packet size range
             if(output + d > maxOut) break;// if ouput plus that value is greater than max output break out of loop
             data[x].push_back(d);// if max is not violated add that data to the list of streams eminating from the node
             output += d;// apped the data to the ouput value
-            dataStreams++;// increment the number of datastreams that exist
-        }
+        } while (output < maxOut);
     }
 }
 
@@ -369,7 +376,7 @@ void Topology::makeEdges(auto &edges){
     for (int y = 0; y < tNumNodes; y++){//for all the nodes
         for (int x = 0; x < y; x++){// go through their connections, stopping at thier own column
             // if there is no edge then skip, else create edge and add to the queue
-            (connections[y][x]) ? 0 continue : edges.push_back(make_tuple(distance[y][x], y, x))
+            if(!connections[y][x]) edges.push(make_tuple(distance[y][x], y, x));
         }
     }
 }

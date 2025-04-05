@@ -412,10 +412,9 @@ vector<int> SDA::rtnOutput(bool printToo, ostream &outStream) {
  * @param to Where the SDA will be printed to
  * @return -1 if there is an error
  */
-int SDA::print(ostream &to = cout) {
+void SDA::print(ostream &to = cout) {
     if (initChar < 0) {
         cout << "Error in SDA Class: print(...): this SDA has not been initialized.";
-        return -1;
     }
 
     to << initState << " <- " << initChar << endl;
@@ -429,5 +428,44 @@ int SDA::print(ostream &to = cout) {
         }
     }
     if (verbose) cout << "SDA Printed." << endl;
-    return 0;
+}
+
+SDA::SDA(int numStates, int numChars, int maxRespLen, int outputLen, vector<string> toConvert, int initState, bool verbose) {
+    initChar = -1;
+    this->numStates = numStates;
+    this->initState = initState;
+    this->numChars = numChars;
+    this->maxRespLen = maxRespLen;
+    this->outputLen = outputLen;
+    this->verbose = verbose;
+
+    transitions.reserve(numStates);
+    for (vector<int> v: transitions) {
+        v.reserve(numChars);
+    }
+
+    responses.reserve(numStates);
+    for (vector<vector<int> > vec1: responses) {
+        vec1.reserve(numChars);
+        for (vector<int> vec2: vec1) {
+            vec2.reserve(maxRespLen);
+        }
+    }
+
+    for(string s : toConvert){// for each line of the SDA
+        if (s[2] == '<'){// if its the initialization
+            initState = s[0] - '0';// get the initial state
+            initChar = s[0 + 5] - '0';// get the initial character
+        }else{// else it is a response
+            transitions[s[0] - '0'][s[4] - '0'] = s[9] - '0';// record the transition
+            int c = 13;// start from first character of response
+            vector<int> stateResponse;// vector recording the response
+            do{ // record the response
+                stateResponse.push_back(s[c] - '0');// push the character onto the response
+            } while (s[c] != ']');// while not reached end of line
+            responses[s[0] - '0'][s[9] - '0'] = stateResponse;// set the response for the transition
+        }
+    }
+    
+    if (verbose) cout << "SDA made with " << numStates << " states." << endl;
 }

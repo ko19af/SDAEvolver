@@ -333,7 +333,9 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
 
     // Report the best SDA from GA
     outStrm << "Mutation Rate: " << mutationRate * 100 << "%" << endl;
-    outStrm << "Best SDA: " << population[bestIdx].print(outStrm) << endl;
+    outStrm << "Best SDA: ";
+    population[bestIdx].print(outStrm);// print out the best SDA
+    outStrm << endl;
     outStrm << "Best Layout: ";
     for (int x : c) outStrm << x << " ";
     outStrm << endl;
@@ -347,9 +349,8 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
     SDA* population;
     population = new SDA[popSize];
     bool min = true;
-    
-    if (min) popWorstFit = DBL_MAX;
-    else popWorstFit = DBL_MIN;
+
+    popWorstFit = (min) ? DBL_MAX : DBL_MIN;
 
     // Step 1: initialize the population
     for (int i = 0; i < popSize; ++i) {

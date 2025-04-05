@@ -12,13 +12,14 @@ public:
     SDA(SDA &other);
     // The equals sign after the arguments provides the default value for the parameters.
     explicit SDA(int numStates, int numChars, int maxRespLen, int outputLen, int initState = 0, bool verbose = false);
+    explicit SDA(int numStates, int numChars, int maxRespLen, int outputLen, vector<string> toConvert, int initState = 0, bool verbose = false);
     ~SDA();
 
     int randomize();
     int copy(SDA &other);
     int crossover(SDA &other);
     int mutate(int numMuts);
-    int print(ostream &to);
+    void print(ostream &to);
     bool operator!=(SDA &other);
     bool operator==(SDA &other);
     vector<vector<vector<int> > > getResponses();
