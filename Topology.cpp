@@ -376,17 +376,16 @@ void Topology::makeEdges(auto &edges){
     for (int y = 0; y < tNumNodes; y++){//for all the nodes
         for (int x = 0; x < y; x++){// go through their connections, stopping at thier own column
             if(connections[y][x])
-             edges.push(make_tuple(distance[y][x], x, y));// if there is an edge, record it and add to the queue
+                if(edges.empty()){
+                    edges.push_back(make_tuple(distance[y][x], x, y));
+                    continue;
+                }
+                for (int c = 0; x < edges.size(); c++){
+                    if(get<0>(edges[c]) > distance[y][x]) edges.insert(edges.begin() + c, make_tuple(distance[y][x], x, y));
+                }
         }
     }
 }
-
-class my_greater {
-    public:
-      bool operator() (const auto& arg1, const auto& arg2) const {return get<0>(arg1) > get<0>(arg2);
-          return false;
-      }
-    };
 
 /**
  * This method determines the which connections are required at minimum to connect the network
@@ -394,14 +393,15 @@ class my_greater {
  */
 
 void Topology::minimumNetwork(vector<vector<int>> &newNet){
-    priority_queue<tuple<double,int,int>, vector<tuple<double,int,int>>, my_greater> edges;
+    vector<tuple<double,int,int>> edges;
     makeEdges(edges);// make the edges of the network
     double count = 0;
-    vector<int> parent(tNumNodes), rank(tNumNodes, 1);// initialize the parents of the nodes and thier ranks
+    vector<int> parent(tNumNodes);// initialize the parents of the nodes and thier ranks
+    vector<int> rank(tNumNodes, 1);                                   
     for (int x = 0; x < parent.size(); x++) parent[x] = x;// initialize parent of nodes as themselves
     while(!edges.empty()){// while there is an edge to examine
-        int x = get<1>(edges.top()), y = get<2>(edges.top()); // get info about edge from tuple
-        edges.pop();// remove edge
+        int x = get<1>(edges[0]), y = get<2>(edges[0]); // get info about edge from tuple
+        edges.erase(edges.begin());// remove edge
         int parentx = find(x, parent);
         int parenty = find(y, parent); // find the parents of the two nodes
         if(parentx != parenty){// if the nodes do not have a common parent (i.e are disconnected)
@@ -418,7 +418,7 @@ void Topology::minimumNetwork(vector<vector<int>> &newNet){
  * @param parent is the vector recording which node has which parent
  */
 
-bool Topology::find(int i, vector<int> &parent){
+int Topology::find(int i, vector<int>& parent){
     return (parent[i] == i) ? i : (find(parent[i], parent));
 }
 
