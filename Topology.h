@@ -16,7 +16,7 @@ public:
     explicit Topology(string& fileName, bool verbose = false);
     explicit Topology(vector<vector<int>>);
     void ShortestPath(int position, vector<double>& sPath, vector<vector<int>> &nodes, vector<vector<int>>& newC);
-    void minimumNetwork(vector<vector<int>> &newNet);
+    void minimumNetwork(vector<vector<int>> &newNet, double& excess);
     bool setConnections(bool attacked, vector<int>& c);
     void configNet(int &heurFunction, bool verbose = false);
 

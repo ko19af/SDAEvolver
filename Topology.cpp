@@ -390,8 +390,8 @@ void Topology::makeEdges(auto &edges){
  * @param newNet is the new network produced by the MST algorithm
  */
 
-void Topology::minimumNetwork(vector<vector<int>> &newNet){
-    vector<tuple<double,int,int>> edges;
+void Topology::minimumNetwork(vector<vector<int>>& newNet, double& excess){
+    vector<tuple<double, int, int>> edges;
     makeEdges(edges);// make the edges of the network
     double count = 0;
     vector<int> parent(tNumNodes);// initialize the parents of the nodes and thier ranks
@@ -406,7 +406,11 @@ void Topology::minimumNetwork(vector<vector<int>> &newNet){
             unite(parentx, parenty, parent, rank);// set the nodes to have a common parent
             newNet[y][x] = newNet[x][y] = 1;// set the connection in the new network
             if (++count == tNumNodes - 1) break;// if reached minimum number of edges for the network
-        }
+        }else excess += distance[y][x];
+    }
+    while(!edges.empty()){
+        excess += distance[get<2>(edges[0])][get<1>(edges[0])];
+        edges.erase(edges.begin());
     }
 }
 

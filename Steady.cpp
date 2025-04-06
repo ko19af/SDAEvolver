@@ -163,29 +163,6 @@ bool Steady::necroticFilter(vector<int>& connections, Topology& T){
 }
 
 /**
- * A specialized necrotic filter for an attacked network
- * 
- * @param connections are the connections being examined
- * @param T is the topology the connections are being applied to and examined
- */
-
-bool Steady::attNecroticFilter(Topology& T){
-    int count = 0;// variable counting the number of connections in the member
-    int pos = 0;// determines what positon of the vector is being read
-    vector<int> rawConnections;// vector holding the connections from one tower to another
-
-    for (int y = 0; y < T.connections.size(); y++){// go through rows of attacked connections
-        for (int x = 0; x < y; x++){// go through coloumns of attacked connections
-            rawConnections.push_back(T.connections[y][x]);// push back the connection into the raw connections vector
-            if(T.connections[y][x] == 1) count++;// count the number of connections in the network
-        }
-    }
-    // rawConnections is not used, it was placed only to satisfy the methods need for a vector
-    if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections(true, rawConnections)) return true; // DEAD
-    else return false;// return false if member is within bounds and edge connects to cloud
-}
-
-/**
  * This method calculates the average amount of data flowing through each node in the network
  * 
  * @param T is the topology being used in the evaluation of the fitness
@@ -212,16 +189,10 @@ double Steady::dataFitness(Topology& T){
 
 double Steady::distanceFitness(Topology& T){
     double val = 0;// total connection distance in the network
-    int totalD = 0;// total connection distacne in the network
-
-    for (int x = 0; x < T.tNumNodes; x++){// get the total distance in the network
-        for (int y = 0; y < x; y++) {
-            if(T.connections[x][y] != 0) totalD += T.distance[x][y];// sum all the distances between connected nodes
-        }
-    }
+    double excess = 0;// total connection distacne in the network
 
     vector<vector<int>> newNet(T.tNumNodes, vector<int>(T.tNumNodes));// new network with minimum connections
-    T.minimumNetwork(newNet);// kursk's algorithm to identify minimum necessary connections
+    T.minimumNetwork(newNet, excess);// kursk's algorithm to identify minimum necessary connections
     vector<pair<int, int>> paths;// vector holding the edge connecting the cloud nodes to the edge
     for (int x = 0; x < T.numENodes; x++){// for each edge node find the shortest path to a cloud node in the minimum network
         vector<double> sPath(T.tNumNodes, DBL_MAX);// vector recording distance from edge node to all other nodes
@@ -231,7 +202,7 @@ double Steady::distanceFitness(Topology& T){
         createPath(paths, nodes, x, T);// coalice all the edges being used to connect the edge to the cloud
     }
     for(auto path : paths) val += T.distance[path.first][path.second];// record the distance from the minimum path
-    return val;
+    return excess + val + val/paths.size();// minimize excess connections, path connecting edge to cloud, average connection length between edge and cloud
 }
 
 void Steady::createPath(vector<pair<int, int>> &paths, vector<vector<int>> &nodes, int src, Topology &T){
@@ -334,7 +305,6 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
 
     // Step 1: initialize the population
     for (int i = 0; i < popSize; ++i) {
-
         vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
         do{
             SDAOutput = vector<int>(SDAResponseLength, 0); // vector for holding response from SDA
@@ -390,8 +360,4 @@ Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int p
 
 Steady::Steady(Topology& T, int heurFunction, ofstream& fName){
 
-    this->heurFunction = heurFunction;// set the heurestic function
-
-    if (attNecroticFilter(T)) fName << "Network died" << endl; // if the network is dead based on the attack necrotic filter criteria
-    else fName << "Fitness of network: " << CalcFitness(T) << endl; // else network is not dead, calculate its fitness
-}
+   }

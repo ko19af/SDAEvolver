@@ -22,7 +22,6 @@ class Steady {
         double dataFitness(Topology& T);
         double CalcFitness(Topology &T);
         bool necroticFilter(vector<int>& connections, Topology& T);
-        bool attNecroticFilter(Topology& T);
         void createPath(vector<pair<int, int>> &paths, vector<vector<int>> &nodes, int src, Topology &T);
         vector<bool> dead;
 
