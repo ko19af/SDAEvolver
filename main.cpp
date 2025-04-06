@@ -34,7 +34,6 @@ int main(int argc, char* argv[]) {
     int runs = 30;
     int heurFunction = 0;
 
-    
     if(argc > 1){// collect hyper-parameters for the run (if provided)
     numStates = atoi(argv[1]);
     numChars = atoi(argv[2]);
