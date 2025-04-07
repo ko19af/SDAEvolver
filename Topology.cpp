@@ -347,15 +347,15 @@ void Topology::ChooseNodeLocations(int x, int y, int numNodes){
  * @param sPath is the shortest path from the start node to any other node in the network it has a path to
 */
 
-void Topology::ShortestPath(int src, vector<double> &sPath, vector<vector<int>> &nodes, vector<vector<int>> &newC){
-    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;
+void Topology::ShortestPath(int src, vector<double> &sPath, vector<vector<int>> &nodes){
+    priority_queue<pair<double,int>, vector<pair<double,int>>, greater<pair<double,int>>> pq;
     pq.push(make_pair(0, src));// push starting point with inital distance of zero into priority queue
     sPath[src] = 0;// set initial distance to source as zero
     while(!pq.empty()){// while there is still a node to examine
         int u = pq.top().second;// get the node being examined from the pq
         pq.pop();// remove element from the queue
         for (int x = 0; x < tNumNodes; x++){// look at all of the nodes connections
-            if(newC[u][x] == 0) continue;// if there is no connection to that node skip it
+            if(connections[u][x] == 0) continue;// if there is no connection to that node skip it
             double weight = distance[u][x];// reterive distance to connected node
             if(sPath[x] > sPath[u] + weight){// if there is a shorter path to that node
                 sPath[x] = sPath[u] + weight;// update the shorter path

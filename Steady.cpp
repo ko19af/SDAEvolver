@@ -189,20 +189,26 @@ double Steady::dataFitness(Topology& T){
 
 double Steady::distanceFitness(Topology& T){
     double val = 0;// total connection distance in the network
-    double excess = 0;// total connection distacne in the network
+    double excess = 0;// total connection distance in the network minus shortest path form edge to cloud
 
-    vector<vector<int>> newNet(T.tNumNodes, vector<int>(T.tNumNodes));// new network with minimum connections
-    T.minimumNetwork(newNet, excess);// kursk's algorithm to identify minimum necessary connections
-    vector<pair<int, int>> paths;// vector holding the edge connecting the cloud nodes to the edge
+    for (int y = 0; y < T.tNumNodes; y++){// go thourh all the nodes
+        for (int x = 0; x < y; x++){
+            if(T.connections[y][x] == 1)excess += T.distance[y][x];// if they are connected add distance to excess
+        }
+    }
+
+        // vector<vector<int>> newNet(T.tNumNodes, vector<int>(T.tNumNodes));// new network with minimum connections
+        // T.minimumNetwork(newNet, excess);// kursk's algorithm to identify minimum necessary connections
+        vector<pair<int, int>> paths;     // vector holding the edge connecting the cloud nodes to the edge
     for (int x = 0; x < T.numENodes; x++){// for each edge node find the shortest path to a cloud node in the minimum network
         vector<double> sPath(T.tNumNodes, DBL_MAX);// vector recording distance from edge node to all other nodes
         vector<vector<int>> nodes(T.tNumNodes);// record nodes used for the shortest path
         sPath[x] = 0;// set distance to starting edge node to zero
-        T.ShortestPath(x, sPath, nodes, newNet);// calculate shortest path to all nodes in topology from selected edge node
+        T.ShortestPath(x, sPath, nodes);// calculate shortest path to all nodes in topology from selected edge node
         createPath(paths, nodes, x, T);// coalice all the edges being used to connect the edge to the cloud
     }
     for(auto path : paths) val += T.distance[path.first][path.second];// record the distance from the minimum path
-    return excess + val + val/paths.size();// minimize excess connections, path connecting edge to cloud, average connection length between edge and cloud
+    return (excess-val) + val + val/paths.size();// minimize excess connections, path connecting edge to cloud, average connection length between edge and cloud
 }
 
 void Steady::createPath(vector<pair<int, int>> &paths, vector<vector<int>> &nodes, int src, Topology &T){
@@ -286,7 +292,6 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
     outStrm << "Mutation Rate: " << mutationRate * 100 << "%" << endl;
     outStrm << "Best SDA: ";
     population[bestIdx].print(outStrm);// print out the best SDA
-    outStrm << endl;
     outStrm << "Best Layout: ";
     for (int x : c) outStrm << x << " ";
     outStrm << endl;
@@ -300,7 +305,6 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
     SDA* population;
     population = new SDA[popSize];
     bool min = true;
-
     popWorstFit = (min) ? DBL_MAX : DBL_MIN;
 
     // Step 1: initialize the population
@@ -358,6 +362,6 @@ Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int p
  *
 */
 
-Steady::Steady(Topology& T, int heurFunction, ofstream& fName){
+Steady::Steady(Topology& T, SDA* population, int heurFunction, ofstream& fName){
 
    }

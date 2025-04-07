@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     srand(1);// seed the random number generator
     
     if(atoi(argv[13])){// if the 13th console passed parameter is one initiate attack simulation
-        AttackSim(atoi(argv[12]), atof(argv[14]) / 100); // call attack sim and provide it with the appropriate parameters
+        AttackSim(atoi(argv[12]), atoi(argv[14]), atof(argv[15]) / 100); // call attack sim and provide it with the appropriate parameters
         return 0;// exit program
     }
     
@@ -26,11 +26,11 @@ int main(int argc, char* argv[]) {
     int popSize = 50;
     int tournSelector = 3;
     int gaOperator = 1;
-    int numGen = 10000;
+    int numGen = 100000;
     int crossOp = 1;
-    double crossRate = 0.9;
+    double crossRate = 0.1;
     int mutOperator = 1;
-    double mutRate = 0.9;
+    double mutRate = 0.1;
     int runs = 30;
     int heurFunction = 0;
 
@@ -66,14 +66,15 @@ int main(int argc, char* argv[]) {
         " gaOperator: " << gaOperator << " numGen: " << numGen <<
         " crossOp: " << crossOp  << " crossRate(%): " << 
         setprecision(15) << crossRate << " mutationOperator: " <<
-            mutOperator << " mutationRate(%): " << setprecision(15) <<
-            mutRate <<  " Heurestic: " << heurFunction << " Topology: " << t << " runs: " << runs << endl;
+        mutOperator << " mutationRate(%): " << setprecision(15) <<
+        mutRate <<  " Heurestic: " << heurFunction << " Topology: " <<
+        t << " runs: " << runs << endl;
 
         MyFile << "Topology: " << t + 1 << endl;
 
         for (int x = 0; x < runs; x++){
             MyFile << "Run: " << x + 1 << endl;
-            Steady(T, MyFile, numStates,numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
+            Steady(T, MyFile, numStates, numChars, popSize, tournSelector, numGen, crossOp, crossRate, mutOperator, mutRate, heurFunction);
         }
         MyFile.close();
     }

@@ -21,13 +21,14 @@ using namespace std;
 
 class AttackSim {
 public:
-    explicit AttackSim(int heurFunction = 0, double attTowers = .05, bool verbose = false, string path = "Output");
+    explicit AttackSim(int heurFunction = 0, int attFunction = 0, double attTowers = .05, bool verbose = false, string path = "Output");
     bool split(string input, char del, string &c);
+    void performTowerAttack(Topology& T);
+    void performDataAttack(Topology& T, int maxOut = 10000, int upper = 20, int lower = 5);
 
 private:
     vector<vector<int>> network;// vector holding the network layout
     vector<vector<int>> location;// vector holding the location of the nodes in the network
-    vector<vector<vector<int>>> networkCon;// vector holding all the network connections from a file
     vector<bool> attTowers;// vector recording the towers being attacked
     vector<vector<vector<int>>> topologies;
     SDA* population;
@@ -43,10 +44,8 @@ private:
     double crossRate = 0.5;
 
     void selectAttackedTowers(int numTowers, Topology& T);
-    void performTowerAttack();
-    void performDataAttack(Topology &T, int maxOut = 10000, int upper = 20, int lower = 5);
     void readTopologies();
-    Topology readEData(const std::filesystem::__cxx11::path &filePath, vector<string> &hyperParameters); // read the experiment data (connections and topology used)
+    Topology readEData(const std::filesystem::__cxx11::path &filePath, vector<string> &hyperParameters, ofstream& outputFile);
     void readHyperParameters(string input, vector<string> &hyperParameters);
 };
 

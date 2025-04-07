@@ -4,62 +4,67 @@
  * Performs a cyberattack simulation on a provided network to determine its reslience to the attack
  * 
  * @param heurFunction decides which heurestic function should be used for the analysis
+ * @param attFunction decides which attack is being performed on the network
  * @param attTowers is the percentage of towers being attacked in the network
  * @param path is the directory holding the files with the completed runs being examined
  * @param verbose is a boolean determining if the info should be printed
  */
-AttackSim::AttackSim(int heurFunction, double attTowers, bool verbose, string path){
+AttackSim::AttackSim(int heurFunction, int attFunction, double attTowers, bool verbose, string path){
 
     readTopologies();// read in all the topologies
 
     for (const auto &entry : fs::directory_iterator(path)){// iterates over the files in the directory provided without modifying them
         vector<string> hyperParameters;
-        Topology T = readEData(entry.path(), hyperParameters);// read the information in from the file and set the topology
 
         string file = string(entry.path()).erase(0, 7);// get the name of the file being attacked
         ofstream outputFile("Output_2/Attacked_" + file);// create the file recording the results
 
-        outputFile << "Heurestic Function: " << to_string(heurFunction) << "\t Attacked Towers (%): " << setprecision(15) << attTowers << endl;
+        Topology T = readEData(entry.path(), hyperParameters, outputFile);// read the information in from the file and set the topology
+
+        outputFile << "Heurestic Function: " << to_string(heurFunction) <<
+        "\t Attack Function: " << to_string(attFunction) << 
+        "\t Attacked Towers (%): " << setprecision(15) << attTowers << endl;
         selectAttackedTowers(T.numNodes * attTowers, T);// select the towers being attacked in the simulation
 
-        performTowerAttack();// perform the DOS/DDOS attack that disables towers
-
-        while(networkCon.size() > 0){// while there is a network to examine
-            outputFile << "Run: " << hyperParameters[13] << endl;
-            T.connections = networkCon[0];         // set the connections in the topology
-            Steady(T, heurFunction, outputFile); // call steady to make use of heurestic methods in the class
-            networkCon.erase(networkCon.begin());
-        }
+        for (int x = 0; x < stoi(hyperParameters[12]); x++){// perform the runs
+            outputFile << "Run: " << x + 1 << endl;
+            Steady(T, population, heurFunction, outputFile);
+            }
         outputFile.close();
     }
 }
 
 /**
- * This method reads a provided connection layout and reads it into the program
+ * This method loads the topology information into the Topology class and reads in the
+ * SDA data from the previous netwrok construction provided from the file
  * 
  * @param filePath is the path of the file being read into the system
+ * @param hyperParameters stores the hyperParameters used ffrom the initial newtwork construction
+ * @param outputFile is where the results will be printed to, it is provided here so the hyperparameters from the previous file are written in
  */
 
-Topology AttackSim::readEData(const std::filesystem::__cxx11::path& filePath, vector<string> &hyperParameters){
+Topology AttackSim::readEData(const std::filesystem::__cxx11::path& filePath, vector<string> &hyperParameters, ofstream& outputFile){
     string text;// holds text from file
     string tFile;// holds the topology file name
-    
     ifstream ReadFile(filePath);// input file stream reading in the desired file
-    getline(ReadFile, text);
-    readHyperParameters(text, hyperParameters);
-    getline(ReadFile, text); // get the second line from the file
-    split(text, ':', tFile);// split the text from the data wanted for getting the topology file name
 
+    getline(ReadFile, text);// read first line from file
+    outputFile << text << endl;// write hyperparameters line from file
+    readHyperParameters(text, hyperParameters);// load hyperparameters into the vector
+    
+    getline(ReadFile, text); // get the second line from the file
+    outputFile << text << endl;// write the Topology used for the experiment
+    split(text, ':', tFile); // split the text from the data wanted for getting the topology file name
     Topology T = Topology(topologies[tFile[0] - '0' - 1]);// initialize the topology with the correct layout for the file
+
     this->population = new SDA[stoi(hyperParameters[2])];
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
     int numSDAs = 0;
 
     vector<vector<int>> connections = vector<vector<int>>(T.tNumNodes, vector<int>(T.tNumNodes));// initialize connections matrix
 
-    while(getline(ReadFile, text)){// read  rest of the lines from the file
+    while(getline(ReadFile, text)){// read rest of the lines from the file
         string c = "";// string holds splited part from the files text
-
         if(split(text, ':', c)){// if reading "Best SDA"
             vector<string> theSDA;// create vector to hold string form of vector
             do{
@@ -67,22 +72,16 @@ Topology AttackSim::readEData(const std::filesystem::__cxx11::path& filePath, ve
                 c = "";
                 getline(ReadFile, text);// get next line from file
             } while (!split(text, ':', c));// while not reading in a "Best Layout"
-
             population[numSDAs] = SDA(stoi(hyperParameters[0]), stoi(hyperParameters[1]), SDAResponseLength, SDAResponseLength, theSDA);
-        
-            for (int y = 0; y < T.tNumNodes; y++){// load connections vector into the connections matrix
-                for (int x = 0; x < y; x++){
-                    if(y >= (T.numNodes+T.numENodes) && x < T.numENodes){// set connections between edge & cloud nodes to zero
-                        connections[y][x] = 0;
-                        connections[x][y] = 0;
-                    }else{// set connection based on vector given from SDA
-                        connections[y][x] = c[0] - '0';
-                        connections[x][y] = c[0] - '0';
-                        if(c.size() > 2) c.erase(c.begin(), c.begin() + 2);// remove the inserted element and following space from the vector
-                    }
-                }
-            }
-            networkCon.push_back(connections);// push network connections into vector
+            
+            vector<int> SDAOutput(SDAResponseLength, 0);// use these 6 lines to test the SDA is being read in correctly
+            SDAOutput = vector<int>(SDAResponseLength, 0);
+            population[numSDAs].fillOutput(SDAOutput, false, cout);
+            for(int i : SDAOutput)
+                cout << i;
+            cout << endl;
+
+            numSDAs++;// increment the number of pre-designed SDAs inserted into the population
         }
     }
     ReadFile.close();// close the file being read
@@ -141,20 +140,27 @@ void AttackSim::selectAttackedTowers(int numTowers, Topology& T){
  * This method performs the DOS/DDOS attack variation that disables the towers in the network by removing the 
  * rows/coloumns from the connections vector representing these towers
  * 
- * @param actTowers is the number of active towes in the network before the attack simulation
- * @param remTowers is the number of towers being disabled in the network for the simulation
+ * @param T is the topology being attacked
  */
 
-void AttackSim::performTowerAttack(){
-    for(vector<vector<int>> connections : networkCon){// for each connections matrix
-        for (int tow = 0; tow < attTowers.size(); tow++){// go through the vector containing the attacked towers
-            if(attTowers[tow]){// if the tower is being attacked
-                fill(connections[tow].begin(), connections[tow].end(), 0);// set the connectctions in the attacked tower as zero
-                for(vector<int> row : connections) row[tow] = 0;// remove the connections in the attacked towers coloumn
-            }
+void AttackSim::performTowerAttack(Topology& T){
+    for (int tow = 0; tow < attTowers.size(); tow++){// go through the vector containing the attacked towers
+        if(attTowers[tow]){// if the tower is being attacked
+            fill(T.connections[tow].begin(), T.connections[tow].end(), 0);// set the connectctions in the attacked tower as zero
+            for(vector<int> row : T.connections) row[tow] = 0;// remove the connections in the attacked towers coloumn
         }
     }
 }
+
+/**
+ * This method performs the DoS/DDoS attack the injects additional data into the network without
+ * disablling the tower being attacked
+ * 
+ * @param T is the topology being attacked
+ * @param maxOut is the maximum amount of data a node is permitted to transmit (units in mbps)
+ * @param upper is the upperlimit of a data stream emitting from a node (units in mbps)
+ * @param lower is the lowerlimit of a data stream emitting from a node (units in mbps)
+ */
 
 void AttackSim::performDataAttack(Topology &T, int maxOut, int upper, int lower ){
     for (int tow = 0; tow < attTowers.size(); tow++){// go through the vector containing the attacked towers
@@ -191,21 +197,28 @@ void AttackSim::readTopologies(){
     }
 }
 
+/**
+ * This method reads in the hyperparameters from the file being read
+ * 
+ * @param input is the string containing the hyperparameters
+ * @param hyperParameters is the vector that will store the hyperparameters for later use
+ */
+
 void AttackSim::readHyperParameters(string input, vector<string> &hyperParameters){
-    for (int x = 0; x < input.size(); x++){
-        if (input[x] == ':'){
-            x+=2;
-            if (input[x + 1] != ' '){
+    for (int x = 0; x < input.size(); x++){// for the entire string
+        if (input[x] == ':'){// if we hit a delimiter
+            x+=2;// move to the information in the string
+            if (input[x + 1] != ' '){// if it is not a single digit
                 string p;
-                while( x < input.size() && input[x] != ' '){
+                while( x < input.size() && input[x] != ' '){// read the data pieces into the string
                     p += input[x];
                     x++;
                 }
-                hyperParameters.push_back(p);
+                hyperParameters.push_back(p);// add the hyperparameter to the vector
             }
-            else{
-                hyperParameters.push_back(string(1,input[x]));
-                x+=2;
+            else{// if it is a single digit to be read in
+                hyperParameters.push_back(string(1,input[x]));// push data into the vector
+                x+=2;// move to the next character in the string
             }
         }
     }
