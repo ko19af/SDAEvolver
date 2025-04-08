@@ -7,6 +7,7 @@
 #include <cmath>
 #include <string>
 #include <bits/stdc++.h>
+#include "AttackSim.h"
 
 using namespace std;
 
@@ -17,8 +18,8 @@ public:
     explicit Topology(vector<vector<int>>);
     void ShortestPath(int position, vector<double>& sPath, vector<vector<int>> &nodes);
     void minimumNetwork(vector<vector<int>> &newNet, double& excess);
-    bool setConnections(bool attacked, vector<int>& c);
-    void configNet(int &heurFunction, bool verbose = false);
+    bool setConnections(vector<int>& c, int AttackFunction);
+    void configNet(int &heurFunction, bool verbose = false, int attFunction = -1);
 
     /**
      * The layout of the network that the program will attempt to find the optimal configuration for

@@ -9,7 +9,7 @@
  * @param path is the directory holding the files with the completed runs being examined
  * @param verbose is a boolean determining if the info should be printed
  */
-AttackSim::AttackSim(int heurFunction, int attFunction, double attTowers, bool verbose, string path){
+AttackSim::AttackSim(int heurFunction, int attFunction, double percentAtt, bool verbose, string path){
 
     readTopologies();// read in all the topologies
 
@@ -20,16 +20,17 @@ AttackSim::AttackSim(int heurFunction, int attFunction, double attTowers, bool v
         ofstream outputFile("Output_2/Attacked_" + file);// create the file recording the results
 
         Topology T = readEData(entry.path(), hyperParameters, outputFile);// read the information in from the file and set the topology
-
-        outputFile << "Heurestic Function: " << to_string(heurFunction) <<
-        "\t Attack Function: " << to_string(attFunction) << 
-        "\t Attacked Towers (%): " << setprecision(15) << attTowers << endl;
-        selectAttackedTowers(T.numNodes * attTowers, T);// select the towers being attacked in the simulation
+        selectAttackedTowers(T.numNodes * percentAtt, T);// select the towers being attacked in the simulation
+        outputFile << "Heurestic Function: " << to_string(heurFunction) << "\t Attack Function: " 
+                   << to_string(attFunction) << "\t Attacked Towers (%): " << setprecision(15) << percentAtt << "\n"
+                   << "Attacked Towers: ";
+        for (int t = 0; t < attTowers.size(); t++) outputFile << t << "\t";
+        outputFile << endl;
 
         for (int x = 0; x < stoi(hyperParameters[12]); x++){// perform the runs
             outputFile << "Run: " << x + 1 << endl;
-            Steady(T, population, heurFunction, outputFile);
-            }
+            Steady(T, population, attFunction, hyperParameters, outputFile);
+        }
         outputFile.close();
     }
 }
@@ -110,7 +111,7 @@ bool AttackSim::split(string input, char del, string& c){
  */
 
 void AttackSim::selectAttackedTowers(int numTowers, Topology& T){
-    vector<bool> attackedTowers = vector<bool>(T.tNumNodes, 0);// vector determing which towers are attacked
+    this->attTowers = vector<bool>(T.tNumNodes, 0);// vector determing which towers are attacked
 
     T.tNumNodes -= numTowers;// remove the number of deactivated towers from the total count and non cloud/edge node towers
     T.numNodes -= numTowers;
@@ -123,8 +124,8 @@ void AttackSim::selectAttackedTowers(int numTowers, Topology& T){
         int aTow = 0;
         do{
             aTow = distrib(gen);// randomly select a tower to attack
-        } while (attackedTowers[aTow]);// choose a different tower if it was alread selected
-        attackedTowers[aTow] = true; // if tower is not already selected add to vector
+        } while (attTowers[aTow]);// choose a different tower if it was alread selected
+        attTowers[aTow] = true; // if tower is not already selected add to vector
     }
 }
 
@@ -135,11 +136,11 @@ void AttackSim::selectAttackedTowers(int numTowers, Topology& T){
  * @param T is the topology being attacked
  */
 
-void AttackSim::performTowerAttack(Topology& T){
+void AttackSim::performTowerAttack(vector<vector<int>>& connections){
     for (int tow = 0; tow < attTowers.size(); tow++){// go through the vector containing the attacked towers
         if(attTowers[tow]){// if the tower is being attacked
-            fill(T.connections[tow].begin(), T.connections[tow].end(), 0);// set the connectctions in the attacked tower as zero
-            for(vector<int> row : T.connections) row[tow] = 0;// remove the connections in the attacked towers coloumn
+            fill(connections[tow].begin(), connections[tow].end(), 0);// set the connectctions in the attacked tower as zero
+            for(vector<int> row : connections) row[tow] = 0;// remove the connections in the attacked towers coloumn
         }
     }
 }
@@ -154,14 +155,14 @@ void AttackSim::performTowerAttack(Topology& T){
  * @param lower is the lowerlimit of a data stream emitting from a node (units in mbps)
  */
 
-void AttackSim::performDataAttack(Topology &T, int maxOut, int upper, int lower ){
+void AttackSim::performDataAttack(vector<vector<int>>& data, int maxOut, int upper, int lower ){
     for (int tow = 0; tow < attTowers.size(); tow++){// go through the vector containing the attacked towers
         if(attTowers[tow]){// if tower is being attacked
             double output = 0; // record how much data is being ouputed at the node
         do{// while the ouput from the node is less than the max ouput
             double d = round((rand()/(double)RAND_MAX)*(upper-lower)+lower);// randomly generate a value in the packet size range
             if(output + d > maxOut) break;// if ouput plus that value is greater than max output break out of loop
-            T.data[tow].push_back(d);// if max is not violated add that data to the list of streams eminating from the node
+            data[tow].push_back(d);// if max is not violated add that data to the list of streams eminating from the node
             output += d;// apped the data to the ouput value
         } while (output < maxOut);
         }

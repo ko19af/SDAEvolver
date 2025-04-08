@@ -21,10 +21,10 @@ using namespace std;
 
 class AttackSim {
 public:
-    explicit AttackSim(int heurFunction = 0, int attFunction = 0, double attTowers = .05, bool verbose = false, string path = "Output");
+    explicit AttackSim(int heurFunction = 0, int attFunction = 0, double percentAtt = .05, bool verbose = false, string path = "Output");
     bool split(string input, char del, string &c);
-    void performTowerAttack(Topology& T);
-    void performDataAttack(Topology& T, int maxOut = 10000, int upper = 20, int lower = 5);
+    void performTowerAttack(vector<vector<int>>& connections);
+    void performDataAttack(vector<vector<int>>& data, int maxOut = 10000, int upper = 20, int lower = 5);
 
 private:
     vector<vector<int>> network;// vector holding the network layout

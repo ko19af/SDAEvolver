@@ -468,24 +468,24 @@ void Topology:: calculateDist(){
  * @return is the boolean determing if this network connects all edge nodes to their cloud nodes
 */
 
-bool Topology::setConnections(bool attacked, vector<int>& c){
-    
-    if(!attacked){// if network is not attacked
-        this->connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));// 2-d vector representing connections between nodes
-        for (int y = 0; y < connections.size(); y++){// fill the connection matrix
-            for (int x = 0; x < y; x++){
-                if(y >= (numNodes+numENodes) && x < numENodes){// set connections between edge & cloud nodes to zero
-                    connections[y][x] = 0;
-                    connections[x][y] = 0;
-                }else{// set connection based on vector given from SDA
-                    connections[y][x] = c[0];
-                    connections[x][y] = c[0];
-                }
-                c.erase(c.begin()); // remove node from checking
+bool Topology::setConnections(vector<int>& c, int attackFunction){
+    this->connections = vector<vector<int>>(tNumNodes, vector<int>(tNumNodes));// 2-d vector representing connections between nodes
+
+    for (int y = 0; y < connections.size(); y++){// fill the connection matrix
+        for (int x = 0; x < y; x++){
+            if(y >= (numNodes+numENodes) && x < numENodes){// set connections between edge & cloud nodes to zero
+                connections[y][x] = 0;
+                connections[x][y] = 0;
+            }else{// set connection based on vector given from SDA
+                connections[y][x] = c[0];
+                connections[x][y] = c[0];
             }
+            c.erase(c.begin()); // remove node from checking
         }
     }
 
+    if(attackFunction == 1) AttackSim().performTowerAttack(connections);// perform tower attack on the network
+    
     LayerNodes();// layer the nodes in the network
 
     for (int x = 0; x < numENodes; x++){// go through the edge nodes
@@ -503,10 +503,14 @@ bool Topology::setConnections(bool attacked, vector<int>& c){
  * @param verbose is used to print the infrmation of the network
  */
 
-void Topology::configNet(int& heurFunction, bool verbose){
+void Topology::configNet(int& heurFunction, bool verbose, int attFunction){
     if(heurFunction == 0) return;// if only using distance as heurestic
-    else if (heurFunction == 1) DistributeTraffic();// calculate throughput of nodes
+    else if (heurFunction == 1){
+        if(attFunction == 2) AttackSim().performDataAttack(connections);// perform data injection attack
+        DistributeTraffic();// calculate throughput of nodes
+    }
     else{ // calculate energy consumption of the network
+        if(attFunction == 2) AttackSim().performDataAttack(connections);
         DistributeTraffic();
         EnergyConsumption();
     }

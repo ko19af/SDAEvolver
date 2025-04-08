@@ -113,7 +113,7 @@ vector<int> Steady::TournSelect(int size, bool decreasing) {
 
 double Steady::CalcFitness(Topology& T){
 
-    T.configNet(heurFunction, false);// load in additional info for fitness calculation
+    T.configNet(heurFunction, false, attackHeuristic);// load in additional info for fitness calculation
     
     switch (heurFunction){// switch determing which heurestic function is used for evaluation
     case 0:
@@ -158,7 +158,7 @@ bool Steady::necroticFilter(vector<int>& connections, Topology& T){
         pos++;// move position in vector
     } while (count <= necroticMax * T.tNumNodes && pos < connections.size());// while count is less than maximum and vector bounds are not exceeded
 
-    if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections(false, connections)) return true; // DEAD
+    if ((count < necroticMin * T.tNumNodes || count > necroticMax * T.tNumNodes) || T.setConnections(connections, attackHeuristic)) return true; // DEAD
     else return false;// return false if member is within bounds and edge connects to cloud
 }
 
@@ -301,14 +301,31 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
     return 0;
 }
 
-int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream& MyFile){
+int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream& MyFile, bool preMade){
     SDA* population;
     population = new SDA[popSize];
     bool min = true;
     popWorstFit = (min) ? DBL_MAX : DBL_MIN;
+    int fill = popSize;
+
+    if(preMade){// Step .1: load pre-made SDAs
+        fill -= sizeof(preMadePop);// adjust population size to create
+        for (int s = 0; s < popSize; s++){// while their is room in the population to add the SDA
+            vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
+            preMadePop[s].fillOutput(SDAOutput, false, cout);
+            while (necroticFilter(SDAOutput, T)){// check network is not dead
+                SDAOutput = vector<int>(SDAResponseLength, 0); // reset vector
+                preMadePop[s] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAResponseLength); // create a new SDA
+                preMadePop[s].fillOutput(SDAOutput, false, cout);// fill vector using SDA
+            }
+            popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
+            dead.push_back(false);// set dead status as false
+            population[s] = preMadePop[s];// insert premade SDAs
+        } 
+    }
 
     // Step 1: initialize the population
-    for (int i = 0; i < popSize; ++i) {
+    for (int i = 0; i < fill; ++i) {
         vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
         do{
             SDAOutput = vector<int>(SDAResponseLength, 0); // vector for holding response from SDA
@@ -362,6 +379,19 @@ Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int p
  *
 */
 
-Steady::Steady(Topology& T, SDA* population, int heurFunction, ofstream& fName){
+Steady::Steady(Topology& T, SDA* prePop, int heurAttackFunction, vector<string>& hyperParameters, ofstream& fName){
+    this->SDANumChars = stoi(hyperParameters[1]);// set Hyperparameter and SDA settings
+    this->popSize = stoi(hyperParameters[2]);
+    this->crossOp = stoi(hyperParameters[6]);
+    this->crossRate = stod(hyperParameters[7]);
+    this->mutOperator = stoi(hyperParameters[8]);
+    this->mutationRate = stod(hyperParameters[9]);
+    this->tournSize = stoi(hyperParameters[3]);
+    this->heurFunction = stoi(hyperParameters[10]);
+    this->preMadePop = prePop;// set preMadePopulation
+    this->attackHeuristic = heurAttackFunction;// set attack function
 
+    SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
+
+    Evolver(stoi(hyperParameters[0]), stoi(hyperParameters[5]), T, fName, true);// call the Evolver
    }

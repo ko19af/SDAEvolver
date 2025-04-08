@@ -14,7 +14,7 @@ using namespace std;
 class Steady {
     public:
         explicit Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction);
-        explicit Steady(Topology& T, SDA* population, int heurFunction, ofstream& fName);
+        explicit Steady(Topology& T, SDA* prePop, int heurAttackFunction, vector<string>& hyperParameters, ofstream& fName);
 
     private:
         double distanceFitness(Topology& T);
@@ -29,13 +29,15 @@ class Steady {
         vector<int> TournSelect(int size, bool decreasing);
         int MatingEvent(SDA *population, Topology& T);
         vector<double> popFits;
-        int Evolver(int SDANumStates, int numGenerations, Topology& T, ostream& MyFile);
+        int Evolver(int SDANumStates, int numGenerations, Topology& T, ostream& MyFile, bool preMade = false);
         int PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population);
 
         int necroticMax = 7;// max number of connections allowed for the necrotic filter
         int necroticMin = 1;// min number of connections allowed by the necrotic filter
         vector<int> rawConnections;
 
+        SDA* preMadePop;
+        int attackHeuristic = -1;
         double popWorstFit;
         int heurFunction = 0;
         int SDANumChars = 2;
