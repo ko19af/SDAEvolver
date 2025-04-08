@@ -73,14 +73,6 @@ Topology AttackSim::readEData(const std::filesystem::__cxx11::path& filePath, ve
                 getline(ReadFile, text);// get next line from file
             } while (!split(text, ':', c));// while not reading in a "Best Layout"
             population[numSDAs] = SDA(stoi(hyperParameters[0]), stoi(hyperParameters[1]), SDAResponseLength, SDAResponseLength, theSDA);
-            
-            vector<int> SDAOutput(SDAResponseLength, 0);// use these 6 lines to test the SDA is being read in correctly
-            SDAOutput = vector<int>(SDAResponseLength, 0);
-            population[numSDAs].fillOutput(SDAOutput, false, cout);
-            for(int i : SDAOutput)
-                cout << i;
-            cout << endl;
-
             numSDAs++;// increment the number of pre-designed SDAs inserted into the population
         }
     }

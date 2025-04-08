@@ -446,18 +446,8 @@ SDA::SDA(int numStates, int numChars, int maxRespLen, int outputLen, vector<stri
     this->outputLen = outputLen;
     this->verbose = verbose;
 
-    transitions.reserve(numStates);
-    for (vector<int> v: transitions) {
-        v.reserve(numChars);
-    }
-
-    responses.reserve(numStates);
-    for (vector<vector<int> > vec1: responses) {
-        vec1.reserve(numChars);
-        for (vector<int> vec2: vec1) {
-            vec2.reserve(maxRespLen);
-        }
-    }
+    transitions = vector(numStates, vector<int>(numChars, 0));
+    responses = vector(numStates, vector(numChars, vector<int>(maxRespLen, 0)));
 
     for(string s : toConvert){// for each line of the SDA
         if (s[2] == '<'){// if its the initialization
@@ -469,8 +459,9 @@ SDA::SDA(int numStates, int numChars, int maxRespLen, int outputLen, vector<stri
             vector<int> stateResponse;// vector recording the response
             do{ // record the response
                 stateResponse.push_back(s[c] - '0');// push the character onto the response
-            } while (s[c] != ']');// while not reached end of line
-            responses[s[0] - '0'][s[9] - '0'] = stateResponse;// set the response for the transition
+                c+=2;// move to next character
+            } while (s[c] != ']'); // while not reached end of line
+            responses[s[0] - '0'][s[4] - '0'] = stateResponse;// set the response for the transition
         }
     }
     
