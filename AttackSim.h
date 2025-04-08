@@ -45,7 +45,7 @@ private:
 
     void selectAttackedTowers(int numTowers, Topology& T);
     void readTopologies();
-    Topology readEData(const std::filesystem::__cxx11::path &filePath, vector<string> &hyperParameters, ofstream& outputFile);
+    Topology readEData(const std::filesystem::__cxx11::path &filePath, vector<string> &hyperParameters, ofstream& outputFile, int attFunction = -1);
     void readHyperParameters(string input, vector<string> &hyperParameters);
 };
 

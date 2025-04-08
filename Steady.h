@@ -56,4 +56,4 @@ class Steady {
         double crossRate = 0.5;
 };
 
-#endif // Topology_H
+#endif // Steady_H

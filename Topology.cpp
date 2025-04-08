@@ -1,11 +1,12 @@
 #include "Topology.h"
+#include "AttackSim.h"
 
 /**
  * Constructor for the topology object that will represent the network layour the SDA program will
  * be attempting to construct an optimal configuration for.
 */
 
-Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbose){
+Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbose, int attFunction){
     
     vector<vector<int>> network(y, vector<int>(x, false));
     this->location = vector<vector<int>>();// vector holding the y and x position of a node in the network
@@ -24,16 +25,16 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
     if(verbose) PrintLayout();
 }
 
-Topology::Topology(string& fileName, bool verbose){
+Topology::Topology(string& fileName, bool verbose, int attFunction){
     readLayout(fileName);// read in the file containing the topology
-    countNodes();// count number and type of nodes in the network and initialize data streams and calculate distance
+    countNodes(attFunction);// count number and type of nodes in the network and initialize data streams and calculate distance
     if (verbose) PrintLayout();
 }
 
 
-Topology::Topology(vector<vector<int>> network){
+Topology::Topology(vector<vector<int>> network, int attFunction){
     this->network = network;
-    countNodes();
+    countNodes(attFunction);
 }
 
 /**
@@ -41,7 +42,7 @@ Topology::Topology(vector<vector<int>> network){
  * initializes the data data streams in the network and calculates the distance between nodes
  */
 
-void Topology::countNodes(){
+void Topology::countNodes(int attFunction){
     this->numENodes = 0;
     this->numCNodes = 0;
     this->numNodes = 0;
@@ -59,7 +60,8 @@ void Topology::countNodes(){
         }
     }
     EdgeTraffic(numENodes, 100);// distribute the traffic to the edge nodes
-    calculateDist();// calculate the distance bettwen the nodes
+    if(attFunction == 2) AttackSim().performDataAttack(connections);
+    calculateDist(); // calculate the distance bettwen the nodes
 }
 
 /**
@@ -484,7 +486,7 @@ bool Topology::setConnections(vector<int>& c, int attackFunction){
         }
     }
 
-    if(attackFunction == 1) AttackSim().performTowerAttack(connections);// perform tower attack on the network
+    //if(attackFunction == 1) AttackSim().performTowerAttack(connections);// perform tower attack on the network
     
     LayerNodes();// layer the nodes in the network
 
@@ -503,14 +505,13 @@ bool Topology::setConnections(vector<int>& c, int attackFunction){
  * @param verbose is used to print the infrmation of the network
  */
 
-void Topology::configNet(int& heurFunction, bool verbose, int attFunction){
+void Topology::configNet(int& heurFunction, bool verbose){
     if(heurFunction == 0) return;// if only using distance as heurestic
     else if (heurFunction == 1){
-        if(attFunction == 2) AttackSim().performDataAttack(connections);// perform data injection attack
+       
         DistributeTraffic();// calculate throughput of nodes
     }
     else{ // calculate energy consumption of the network
-        if(attFunction == 2) AttackSim().performDataAttack(connections);
         DistributeTraffic();
         EnergyConsumption();
     }

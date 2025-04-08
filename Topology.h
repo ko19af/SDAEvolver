@@ -7,19 +7,18 @@
 #include <cmath>
 #include <string>
 #include <bits/stdc++.h>
-#include "AttackSim.h"
 
 using namespace std;
 
 class Topology {
 public:
-    explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = false);
-    explicit Topology(string& fileName, bool verbose = false);
-    explicit Topology(vector<vector<int>>);
+    explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = false, int attFunction = -1);
+    explicit Topology(string& fileName, bool verbose = false, int attFunction = -1);
+    explicit Topology(vector<vector<int>>, int attFunction = -1);
     void ShortestPath(int position, vector<double>& sPath, vector<vector<int>> &nodes);
     void minimumNetwork(vector<vector<int>> &newNet, double& excess);
     bool setConnections(vector<int>& c, int AttackFunction);
-    void configNet(int &heurFunction, bool verbose = false, int attFunction = -1);
+    void configNet(int &heurFunction, bool verbose = false);
 
     /**
      * The layout of the network that the program will attempt to find the optimal configuration for
@@ -41,7 +40,7 @@ public:
     bool analyzeData;
 
 private:
-    void countNodes();
+    void countNodes(int attFunction = -1);
     void makeEdges(auto &edges);
     int find(int i, vector<int>& parent);
     void unite(int x, int y, vector<int> &parent, vector<int> &rank);
@@ -58,7 +57,6 @@ private:
     int ChooseEnd(int y, int x, int numEnds);
     void EnergyConsumption(double transmissionRate = 0.03, double recevingRate = 0.03);
     double round(float var);
-    
 };
 
 #endif // Topology_H

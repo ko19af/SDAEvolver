@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
         to_string(heurFunction) + to_string(t) + ".txt");
 
         MyFile << "# States: " << numStates << " # Chars: " << numChars <<
-        " popSize: " << popSize << " tournSelector " << tournSelector <<
+        " popSize: " << popSize << " tournSelector: " << tournSelector <<
         " gaOperator: " << gaOperator << " numGen: " << numGen <<
         " crossOp: " << crossOp  << " crossRate(%): " << 
         setprecision(15) << crossRate << " mutationOperator: " <<

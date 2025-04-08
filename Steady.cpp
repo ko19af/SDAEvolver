@@ -113,7 +113,7 @@ vector<int> Steady::TournSelect(int size, bool decreasing) {
 
 double Steady::CalcFitness(Topology& T){
 
-    T.configNet(heurFunction, false, attackHeuristic);// load in additional info for fitness calculation
+    T.configNet(heurFunction, false);// load in additional info for fitness calculation
     
     switch (heurFunction){// switch determing which heurestic function is used for evaluation
     case 0:
