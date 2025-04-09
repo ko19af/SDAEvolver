@@ -21,10 +21,11 @@ using namespace std;
 
 class AttackSim {
 public:
-    explicit AttackSim(int heurFunction = 0, int attFunction = 0, double percentAtt = .05, bool verbose = false, string path = "Output");
+    explicit AttackSim();
+    explicit AttackSim(int attFunction, double percentAtt, bool verbose = false, string path = "Output");
     bool split(string input, char del, string &c);
-    void performTowerAttack(vector<vector<int>>& connections);
-    void performDataAttack(vector<vector<int>>& data, int maxOut = 10000, int upper = 20, int lower = 5);
+    void performTowerAttack(vector<vector<int>>& connections, vector<bool>& attackedTowers);
+    void performDataAttack(vector<vector<double>>& data, vector<bool>& attacktedTowers, int maxOut = 10000, int upper = 20, int lower = 5);
 
 private:
     vector<vector<int>> network;// vector holding the network layout
@@ -33,7 +34,6 @@ private:
     vector<vector<vector<int>>> topologies;
     SDA* population;
 
-    int heurFunction = 0;
     int SDAResponseLength = 2;
     int popSize = 100;
     double mutationRate = 0.1;
@@ -47,6 +47,7 @@ private:
     void readTopologies();
     Topology readEData(const std::filesystem::__cxx11::path &filePath, vector<string> &hyperParameters, ofstream& outputFile, int attFunction = -1);
     void readHyperParameters(string input, vector<string> &hyperParameters);
+    double round(float var);
 };
 
 #endif // AttackSim_H

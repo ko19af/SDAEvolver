@@ -29,9 +29,11 @@ public:
     vector<vector<int>> connections;
     vector<int> layer;
     vector<double> energyConsumption;
-    vector<vector<double>> data;
+    vector<vector<double>> data;// records the individual data streams a node is processing
+    vector<vector<double>> attackData;// records the attack streams
     vector<vector<double>> distance; // 2-d vector tracking the distance between nodes
     vector<vector<double>> trafficMatrix; // 2-d vector tracking the incoming and ougoing traffic from a node in the network
+    vector<bool> attTowers; // records which towers are being attacked in the simulation
     int numNodes; // variable representing number of transmission nodes present in the network
     int numCNodes;// varialbe representing total number of cloud nodes in the topology
     int numENodes;// number of edge/fog nodes present in the network
@@ -57,6 +59,8 @@ private:
     int ChooseEnd(int y, int x, int numEnds);
     void EnergyConsumption(double transmissionRate = 0.03, double recevingRate = 0.03);
     double round(float var);
+
+   
 };
 
 #endif // Topology_H

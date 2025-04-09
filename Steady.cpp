@@ -306,26 +306,25 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
     population = new SDA[popSize];
     bool min = true;
     popWorstFit = (min) ? DBL_MAX : DBL_MIN;
-    int fill = popSize;
+    int filled = 0;
 
     if(preMade){// Step .1: load pre-made SDAs
-        fill -= sizeof(preMadePop);// adjust population size to create
-        for (int s = 0; s < popSize; s++){// while their is room in the population to add the SDA
+        filled = sizeof(preMadePop);// adjust population size to create
+        for (int s = 0; s < popSize; s++){
             vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
-            preMadePop[s].fillOutput(SDAOutput, false, cout);
-            while (necroticFilter(SDAOutput, T)){// check network is not dead
-                SDAOutput = vector<int>(SDAResponseLength, 0); // reset vector
+            do{
+                SDAOutput = vector<int>(SDAResponseLength, 0); // vector for holding response from SDA
                 preMadePop[s] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAResponseLength); // create a new SDA
                 preMadePop[s].fillOutput(SDAOutput, false, cout);// fill vector using SDA
-            }
+            }while(necroticFilter(SDAOutput, T));
+            population[s] = preMadePop[s];// while their is room in the population to add the SDA
             popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
             dead.push_back(false);// set dead status as false
-            population[s] = preMadePop[s];// insert premade SDAs
         } 
     }
 
     // Step 1: initialize the population
-    for (int i = 0; i < fill; ++i) {
+    for (int i = filled; i < popSize; ++i){
         vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
         do{
             SDAOutput = vector<int>(SDAResponseLength, 0); // vector for holding response from SDA
@@ -336,7 +335,6 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
         popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
         dead.push_back(false);// set dead status as false
     }
-
 
     // Step 2: Evolution
     for (int gen = 0; gen < numMatingEvents; ++gen) {

@@ -59,8 +59,8 @@ void Topology::countNodes(int attFunction){
             }
         }
     }
+    
     EdgeTraffic(numENodes, 100);// distribute the traffic to the edge nodes
-    if(attFunction == 2) AttackSim().performDataAttack(connections);
     calculateDist(); // calculate the distance bettwen the nodes
 }
 
@@ -151,8 +151,11 @@ void Topology::EdgeTraffic(int numStarts, int maxOut, int upper, int lower){
 void Topology::DistributeTraffic(){
     this->trafficMatrix = vector<vector<double>> (tNumNodes, vector<double>(tNumNodes));
 
-    for (int x = numENodes; x < tNumNodes; x++) data[x].clear(); // clear distribution from previous runs (except at edge nodes)
-    
+    for (int x = numENodes; x < tNumNodes; x++){// reset the nodes data streams
+       if(!attTowers[x]) data[x].clear(); // clear streams at all nodes (except at edge nodes)
+       else data[x] = attackData[x]; // if tower was attacked set it to the attack stream
+    }
+
     vector<int> toDo;// vector containing the nodes that have data to distribute
     vector<vector<double>> toDistribute(tNumNodes);// vector containing data to distribute at each node
 
@@ -486,7 +489,8 @@ bool Topology::setConnections(vector<int>& c, int attackFunction){
         }
     }
 
-    //if(attackFunction == 1) AttackSim().performTowerAttack(connections);// perform tower attack on the network
+    if(attackFunction == 1) AttackSim().performTowerAttack(connections, attTowers); // perform tower attack on the network
+
     
     LayerNodes();// layer the nodes in the network
 
@@ -508,7 +512,6 @@ bool Topology::setConnections(vector<int>& c, int attackFunction){
 void Topology::configNet(int& heurFunction, bool verbose){
     if(heurFunction == 0) return;// if only using distance as heurestic
     else if (heurFunction == 1){
-       
         DistributeTraffic();// calculate throughput of nodes
     }
     else{ // calculate energy consumption of the network
