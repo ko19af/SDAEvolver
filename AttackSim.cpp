@@ -25,9 +25,9 @@ AttackSim::AttackSim(int attFunction, double percentAtt, bool verbose, string pa
         Topology T = readEData(entry.path(), hyperParameters, outputFile, attFunction);// read the information in from the file and set the topology
         selectAttackedTowers(T.numNodes * percentAtt, T);// select the towers being attacked in the simulation
         T.attTowers = attTowers;
-
+        T.attackData = vector<vector<double>>(T.tNumNodes, vector<double>(0,0));
+        
         if (attFunction == 2){
-            T.attackData = vector<vector<double>>(T.tNumNodes);
             performDataAttack(T.attackData, attTowers, 100);
         }
 
