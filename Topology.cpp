@@ -377,7 +377,7 @@ void Topology::ShortestPath(int src, vector<double> &sPath, vector<vector<int>> 
  * @param edges is the priority queue consisting of tuples contianing the edges and their distance
  */
 
-void Topology::makeEdges(auto &edges){
+void Topology::makeEdges(vector<tuple<double, int, int>>  &edges){
     for (int y = 0; y < tNumNodes; y++){// for all the nodes
         for (int x = 0; x < y; x++){// go through their connections, stopping at thier own column
             if(connections[y][x]){

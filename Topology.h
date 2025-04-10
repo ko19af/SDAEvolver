@@ -43,7 +43,7 @@ public:
 
 private:
     void countNodes(int attFunction = -1);
-    void makeEdges(auto &edges);
+    void makeEdges(vector<tuple<double, int, int>> &edges);
     int find(int i, vector<int>& parent);
     void unite(int x, int y, vector<int> &parent, vector<int> &rank);
     void readLayout(string &fileName);
