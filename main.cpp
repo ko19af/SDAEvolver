@@ -17,8 +17,8 @@ int main(int argc, char* argv[]) {
     srand(1);// seed the random number generator
     
     if(atoi(argv[13])){// if the 13th console passed parameter is one initiate attack simulation
-        AttackSim(atoi(argv[14]), atof(argv[15]) / 100); // call attack sim and provide it with the appropriate parameters
-        return 0; // exit program
+       AttackSim(atoi(argv[14]), atof(argv[15]) / 100); // call attack sim and provide it with the appropriate parameters
+       return 0; // exit program
     }
     
     int numStates = 6;// initialize the variables in case none are passed on the cmd line

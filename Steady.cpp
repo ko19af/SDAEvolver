@@ -309,14 +309,15 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
     int filled = 0;
 
     if(preMade){// Step .1: load pre-made SDAs
-        filled = sizeof(preMadePop);// adjust population size to create
-        for (int s = 0; s < popSize; s++){
+        filled = numPreMade;// adjust population size to create
+        for (int s = 0; s < numPreMade; s++){
             vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
-            do{
+            preMadePop[s].fillOutput(SDAOutput, false, cout);// fill vector using SDA
+            while(necroticFilter(SDAOutput, T)){// while SDA is dead
                 SDAOutput = vector<int>(SDAResponseLength, 0); // vector for holding response from SDA
                 preMadePop[s] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAResponseLength); // create a new SDA
                 preMadePop[s].fillOutput(SDAOutput, false, cout);// fill vector using SDA
-            }while(necroticFilter(SDAOutput, T));
+            }
             population[s] = preMadePop[s];// while their is room in the population to add the SDA
             popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
             dead.push_back(false);// set dead status as false
@@ -332,8 +333,8 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
             population[i].fillOutput(SDAOutput, false, cout);// fill vector using SDA
 
         } while (necroticFilter(SDAOutput, T)); // while the member is necrotic
-        popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
-        dead.push_back(false);// set dead status as false
+        //popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
+        //dead.push_back(false);// set dead status as false
     }
 
     // Step 2: Evolution
@@ -388,8 +389,9 @@ Steady::Steady(Topology& T, SDA* prePop, int heurAttackFunction, vector<string>&
     this->heurFunction = stoi(hyperParameters[10]);
     this->preMadePop = prePop;// set preMadePopulation
     this->attackHeuristic = heurAttackFunction;// set attack function
+    this->numPreMade = stoi(hyperParameters[12]);
 
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
-
+    
     Evolver(stoi(hyperParameters[0]), stoi(hyperParameters[5]), T, fName, true);// call the Evolver
    }

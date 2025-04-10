@@ -11,32 +11,40 @@ AttackSim::AttackSim(){}
  * @param path is the directory holding the files with the completed runs being examined
  * @param verbose is a boolean determining if the info should be printed
  */
-AttackSim::AttackSim(int attFunction, double percentAtt, bool verbose, string path){
+AttackSim::AttackSim(int attFunction, double percentAtt, bool verbose){
 
-    readTopologies();// read in all the topologies
+    fs::directory_iterator Start{R"(Output)"};  
+    fs::directory_iterator End{};                
+    int f = 0;
 
-    for (const auto &entry : fs::directory_iterator(path)){// iterates over the files in the directory provided without modifying them
+    readTopologies(); // read in all the topologies
+
+    for (auto Iter{Start}; Iter != End; ++Iter) { // iterates over the files in the directory provided without modifying them
         vector<string> hyperParameters;
 
-        string file = string(entry.path()).erase(0, 7);// get the name of the file being attacked
+        string file = Iter->path().string().erase(0, 7); // get the name of the file being attacked
         string attParam = string(to_string(attFunction) + to_string(percentAtt));
-        ofstream outputFile("Output_2/Attacked_"+ attParam + file); // create the file recording the results
+        ofstream outputFile("Output_2/Attacked_" + attParam + file); // create the file recording the results
 
-        Topology T = readEData(entry.path(), hyperParameters, outputFile, attFunction);// read the information in from the file and set the topology
-        selectAttackedTowers(T.numNodes * percentAtt, T);// select the towers being attacked in the simulation
+        Topology T = readEData(Iter->path().string(), hyperParameters, outputFile, attFunction); // read the information in from the file and set the topology
+        selectAttackedTowers(T.numNodes * percentAtt, T);                               // select the towers being attacked in the simulation
         T.attTowers = attTowers;
-        T.attackData = vector<vector<double>>(T.tNumNodes, vector<double>(0,0));
-        
-        if (attFunction == 2){
+        T.attackData = vector<vector<double>>(T.tNumNodes, vector<double>(0, 0));
+
+        if (attFunction == 2)
+        {
             performDataAttack(T.attackData, attTowers, 100);
         }
 
-        outputFile << "AttackFunction: " << to_string(attFunction) << "\t AttackedTowers(%): " 
-        << setprecision(15) << percentAtt << "\n" << "AttackedTowers: ";
-        for (int t = 0; t < attTowers.size(); t++) if(attTowers[t]) outputFile << t+1 << "\t";
+        outputFile << "AttackFunction: " << to_string(attFunction) << "\t AttackedTowers(%): "
+                   << setprecision(15) << percentAtt << "\n"
+                   << "AttackedTowers: ";
+        for (int t = 0; t < attTowers.size(); t++)
+            if (attTowers[t])
+                outputFile << t + 1 << "\t";
         outputFile << endl;
 
-        for (int x = 0; x < stoi(hyperParameters[12]); x++){// perform the runs
+        for (int x = 0; x < stoi(hyperParameters[12]); x++){ // perform the runs
             outputFile << "Run: " << x + 1 << endl;
             Steady(T, population, attFunction, hyperParameters, outputFile);
         }
@@ -67,7 +75,7 @@ Topology AttackSim::readEData(const std::filesystem::__cxx11::path& filePath, ve
     split(text, ':', tFile); // split the text from the data wanted for getting the topology file name
     Topology T = Topology(topologies[tFile[0] - '0' - 1], attFunction);// initialize the topology with the correct layout for the file
 
-    this->population = new SDA[stoi(hyperParameters[2])];
+    this->population = new SDA[stoi(hyperParameters[12])];
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
     int numSDAs = 0;
 
@@ -86,7 +94,7 @@ Topology AttackSim::readEData(const std::filesystem::__cxx11::path& filePath, ve
             numSDAs++;// increment the number of pre-designed SDAs inserted into the population
         }
     }
-    ReadFile.close();// close the file being read
+    ReadFile.close(); // close the file being read
     return T;// return the newly created Topology
 }
 

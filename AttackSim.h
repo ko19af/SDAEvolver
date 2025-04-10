@@ -22,7 +22,7 @@ using namespace std;
 class AttackSim {
 public:
     explicit AttackSim();
-    explicit AttackSim(int attFunction, double percentAtt, bool verbose = false, string path = "Output");
+    explicit AttackSim(int attFunction, double percentAtt, bool verbose = false);
     bool split(string input, char del, string &c);
     void performTowerAttack(vector<vector<int>>& connections, vector<bool>& attackedTowers);
     void performDataAttack(vector<vector<double>>& data, vector<bool>& attacktedTowers, int maxOut = 10000, int upper = 20, int lower = 5);

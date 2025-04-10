@@ -37,6 +37,7 @@ class Steady {
         vector<int> rawConnections;
 
         SDA* preMadePop;
+        int numPreMade;
         int attackHeuristic = -1;
         double popWorstFit;
         int heurFunction = 0;
