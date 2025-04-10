@@ -333,8 +333,8 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
             population[i].fillOutput(SDAOutput, false, cout);// fill vector using SDA
 
         } while (necroticFilter(SDAOutput, T)); // while the member is necrotic
-        //popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
-        //dead.push_back(false);// set dead status as false
+        popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
+        dead.push_back(false);// set dead status as false
     }
 
     // Step 2: Evolution
