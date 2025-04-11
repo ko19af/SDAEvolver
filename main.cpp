@@ -28,9 +28,9 @@ int main(int argc, char* argv[]) {
         hyperParameters.push_back(atoi(argv[5]));
         hyperParameters.push_back(atoi(argv[6]));
         hyperParameters.push_back(atoi(argv[7]));
-        hyperParameters.push_back(atoi(argv[8])/100);
+        hyperParameters.push_back(atof(argv[8])/100);
         hyperParameters.push_back(atoi(argv[9]));
-        hyperParameters.push_back(atoi(argv[10])/100);
+        hyperParameters.push_back(atof(argv[10])/100);
         hyperParameters.push_back(atoi(argv[11]));
         hyperParameters.push_back(atoi(argv[12]));
     }else{
