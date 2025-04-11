@@ -7,6 +7,7 @@
 #include <cmath>
 #include <string>
 #include <bits/stdc++.h>
+#include "SDA.h"
 
 using namespace std;
 
@@ -40,6 +41,8 @@ public:
     int tNumNodes; // variable representing total number of nodes in the network
     int dataStreams;
     bool analyzeData;
+    int numPreMadeSDA = 0;
+    SDA *preMadePop; // pre-made SDA population
 
 private:
     void countNodes(int attFunction = -1);

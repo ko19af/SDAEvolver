@@ -272,7 +272,7 @@ int Steady::PrintPopFits(ostream &outStrm, vector<double> &popFits) {
  * @return 
 */
 
-int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population){
+int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* population, Topology& T){
     double avgFit = 0;// Holds the average fitness
     int bestIdx = 0;// Stores the best member of populations location
     int amount = 0;
@@ -287,6 +287,7 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
 
     vector<int> c(SDAResponseLength, 0); // vector for holding response from SDA
     population[bestIdx].fillOutput(c, false, cout);// fill vector using SDA
+    if(attackHeuristic == -1)T.preMadePop[T.numPreMadeSDA++] = population[bestIdx];// store the best SDA for the attack simulation
 
     // Report the best SDA from GA
     outStrm << "Mutation Rate: " << mutationRate * 100 << "%" << endl;
@@ -344,7 +345,7 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
     }
     PrintPopFits(MyFile, popFits);// print the final pop value and pop value
     // Step 3: Reporting
-    PrintReport(MyFile, popFits, population);
+    PrintReport(MyFile, popFits, population, T);
 
     delete[] population;
     return 0;
@@ -354,20 +355,19 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
  * This constructor is for use in desiging the network connection layouts
  */
 
-Steady::Steady(Topology& T, ofstream& MyFile, int numStates, int numChars, int popSize, int tournSize, int numGen, int crossOp, double crossRate, int mutOperator, double mutRate, int heurFunction){
-
-    this->SDANumChars = numChars;
-    this->popSize = popSize;
-    this->crossOp = crossOp;
-    this->crossRate = crossRate;
-    this->mutOperator = mutOperator;
-    this->mutationRate = mutRate;
-    this->tournSize = tournSize;
-    this->heurFunction = heurFunction;
+Steady::Steady(Topology& T, ofstream& MyFile, vector<double>& hyperParameters){
+    this->SDANumChars = hyperParameters[1];
+    this->popSize = hyperParameters[2];
+    this->crossOp = hyperParameters[6];
+    this->crossRate = hyperParameters[7];
+    this->mutOperator = hyperParameters[8];
+    this->mutationRate = hyperParameters[9];
+    this->tournSize = hyperParameters[3];
+    this->heurFunction = hyperParameters[11];
 
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
 
-    Evolver(numStates, numGen, T, MyFile);
+    Evolver(hyperParameters[0], hyperParameters[5], T, MyFile);
 }
 
 /**
@@ -394,4 +394,23 @@ Steady::Steady(Topology& T, SDA* prePop, int heurAttackFunction, vector<string>&
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
     
     Evolver(stoi(hyperParameters[0]), stoi(hyperParameters[5]), T, fName, true);// call the Evolver
+   }
+
+   Steady::Steady(Topology& T, int heurAttackFunction, vector<double>& hyperParameters, ofstream& fName){
+    this->SDANumChars = hyperParameters[1];
+    this->popSize = hyperParameters[2];
+    this->crossOp = hyperParameters[6];
+    this->crossRate = hyperParameters[7];
+    this->mutOperator = hyperParameters[8];
+    this->mutationRate = hyperParameters[9];
+    this->tournSize = hyperParameters[3];
+    this->heurFunction = hyperParameters[11];
+    
+    this->preMadePop = T.preMadePop;// set preMadePopulation
+    this->attackHeuristic = heurAttackFunction;// set attack function
+    this->numPreMade = hyperParameters[10];// set number of SDAs that were premade
+
+    SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
+
+    Evolver(hyperParameters[0], hyperParameters[5], T, fName, true);// call the Evolver
    }

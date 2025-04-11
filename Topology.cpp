@@ -152,7 +152,7 @@ void Topology::DistributeTraffic(){
     this->trafficMatrix = vector<vector<double>> (tNumNodes, vector<double>(tNumNodes));
 
     for (int x = numENodes; x < tNumNodes; x++){// reset the nodes data streams
-       if(!attTowers[x]) data[x].clear(); // clear streams at all nodes (except at edge nodes)
+       if(attTowers.empty() || !attTowers[x]) data[x].clear(); // clear streams at all nodes (except at edge nodes)
        else data[x] = attackData[x]; // if tower was attacked set it to the attack stream
     }
 
@@ -491,7 +491,6 @@ bool Topology::setConnections(vector<int>& c, int attackFunction){
 
     if(attackFunction == 1) AttackSim().performTowerAttack(connections, attTowers); // perform tower attack on the network
 
-    
     LayerNodes();// layer the nodes in the network
 
     for (int x = 0; x < numENodes; x++){// go through the edge nodes

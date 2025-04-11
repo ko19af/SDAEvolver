@@ -12,12 +12,10 @@ AttackSim::AttackSim(){}
  * @param verbose is a boolean determining if the info should be printed
  */
 AttackSim::AttackSim(int attFunction, double percentAtt, bool verbose){
-
     fs::directory_iterator Start{R"(Output)"};  
-    fs::directory_iterator End{};                
-    int f = 0;
+    fs::directory_iterator End{};
 
-    readTopologies(); // read in all the topologies
+    readTopologies(); // read ina&ll the topologies  
 
     for (auto Iter{Start}; Iter != End; ++Iter) { // iterates over the files in the directory provided without modifying them
         vector<string> hyperParameters;
@@ -27,14 +25,15 @@ AttackSim::AttackSim(int attFunction, double percentAtt, bool verbose){
         ofstream outputFile("Output_2/Attacked_" + attParam + file); // create the file recording the results
 
         Topology T = readEData(Iter->path().string(), hyperParameters, outputFile, attFunction); // read the information in from the file and set the topology
-        selectAttackedTowers(T.numNodes * percentAtt, T);                               // select the towers being attacked in the simulation
+        if(first){ // select the towers being attacked in the simulation
+            selectAttackedTowers(T.numNodes * percentAtt, T);
+            first = false;
+        }                        
         T.attTowers = attTowers;
         T.attackData = vector<vector<double>>(T.tNumNodes, vector<double>(0, 0));
 
-        if (attFunction == 2)
-        {
-            performDataAttack(T.attackData, attTowers, 100);
-        }
+        if (attFunction == 2) performDataAttack(T.attackData, attTowers, 100);
+        
 
         outputFile << "AttackFunction: " << to_string(attFunction) << "\t AttackedTowers(%): "
                    << setprecision(15) << percentAtt << "\n"
@@ -50,6 +49,36 @@ AttackSim::AttackSim(int attFunction, double percentAtt, bool verbose){
         }
         outputFile.close();
     }
+}
+
+AttackSim::AttackSim(Topology& T, vector<double>& hyperParameters, string fName, string params, int attFunction, double percentAtt, bool verbose){
+
+    string file = fName.erase(0, 7); // get the name of the file being attacked
+    string attParam = string(to_string(attFunction) + to_string(percentAtt));
+    ofstream outputFile("Output_2/Attacked_" + attParam + file); // create the file recording the results
+
+    selectAttackedTowers(T.numNodes * percentAtt, T);// select the towers to attack
+    T.attTowers = attTowers;
+    T.attackData = vector<vector<double>>(T.tNumNodes, vector<double>(0, 0));
+
+    if (attFunction == 2) performDataAttack(T.attackData, attTowers, 100);
+    
+    outputFile << params << endl;
+
+    outputFile << "AttackFunction: " << to_string(attFunction) << "\t AttackedTowers(%): "
+                << setprecision(15) << percentAtt << "\n"
+                << "AttackedTowers: ";
+
+    for (int t = 0; t < attTowers.size(); t++)
+        if (attTowers[t])
+            outputFile << t + 1 << "\t";
+    outputFile << endl;
+
+    for (int x = 0; x < hyperParameters[10]; x++){ // perform the runs
+        outputFile << "Run: " << x + 1 << endl;
+        Steady(T, attFunction, hyperParameters, outputFile);
+    }
+    outputFile.close();
 }
 
 /**
