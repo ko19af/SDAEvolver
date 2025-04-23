@@ -152,8 +152,8 @@ void Topology::DistributeTraffic(){
     this->trafficMatrix = vector<vector<double>> (tNumNodes, vector<double>(tNumNodes));
 
     for (int x = numENodes; x < tNumNodes; x++){// reset the nodes data streams
-       if(attTowers.empty() || !attTowers[x]) data[x].clear(); // clear streams at all nodes (except at edge nodes)
-       else data[x] = attackData[x]; // if tower was attacked set it to the attack stream
+        if(attTowers.empty() || !attTowers[x]) data[x].clear(); // clear streams at all nodes (except at edge nodes)
+        else data[x] = attackData[x]; // if tower was attacked set it to the attack stream
     }
 
     vector<int> toDo;// vector containing the nodes that have data to distribute

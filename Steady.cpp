@@ -290,6 +290,8 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
     if(attackHeuristic == -1)T.preMadePop[T.numPreMadeSDA++] = population[bestIdx];// store the best SDA for the attack simulation
 
     // Report the best SDA from GA
+    if(addDead) outStrm << "Number of Dead Premade SDAs: " << preMadeDead << "/" << numPreMade;// if using premade SDAs, report how many died at start
+    
     outStrm << "Mutation Rate: " << mutationRate * 100 << "%" << endl;
     outStrm << "Best SDA: ";
     population[bestIdx].print(outStrm);// print out the best SDA
@@ -312,17 +314,23 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
     if(preMade){// Step .1: load pre-made SDAs
         filled = numPreMade;// adjust population size to create
         for (int s = 0; s < numPreMade; s++){
-            vector<int> SDAOutput(SDAResponseLength, 0); // vector for holding response from SDA
+            addDead = true;// switch add dead to true so if the SDA died increment dead count
+            vector<int> SDAOutput(SDAResponseLength, 0);// vector for holding response from SDA
             preMadePop[s].fillOutput(SDAOutput, false, cout);// fill vector using SDA
             while(necroticFilter(SDAOutput, T)){// while SDA is dead
-                SDAOutput = vector<int>(SDAResponseLength, 0); // vector for holding response from SDA
+                if(addDead){// if entering while loop for the first time
+                    preMadeDead++;// increment number of premade that died
+                    addDead = false;// set adddead to false
+                }
+                SDAOutput = vector<int>(SDAResponseLength, 0);                                        // vector for holding response from SDA
                 preMadePop[s] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAResponseLength); // create a new SDA
-                preMadePop[s].fillOutput(SDAOutput, false, cout);// fill vector using SDA
+                preMadePop[s].fillOutput(SDAOutput, false, cout);                                     // fill vector using SDA
             }
             population[s] = preMadePop[s];// while their is room in the population to add the SDA
             popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
             dead.push_back(false);// set dead status as false
-        } 
+        }
+        addDead = true;// set addDead to true so the value is reported
     }
 
     // Step 1: initialize the population

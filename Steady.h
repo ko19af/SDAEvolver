@@ -39,6 +39,8 @@ class Steady {
 
         SDA* preMadePop;
         int numPreMade;
+        int preMadeDead = 0;// count number of premade SDA's that died
+        bool addDead = false;// tells the program if it's counting the number of dead pre-made SDAs and if it's reporting it
         int attackHeuristic = -1;
         double popWorstFit;
         int heurFunction = 0;
