@@ -290,8 +290,8 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
     if(attackHeuristic == -1)T.preMadePop[T.numPreMadeSDA++] = population[bestIdx];// store the best SDA for the attack simulation
 
     // Report the best SDA from GA
-    if(addDead) outStrm << "Number of Dead Premade SDAs: " << preMadeDead << "/" << numPreMade;// if using premade SDAs, report how many died at start
-    
+    if(addDead) outStrm << "Number of Dead Premade SDAs: " << preMadeDead << "/" << numPreMade << endl;// print number of dead pre-made 
+
     outStrm << "Mutation Rate: " << mutationRate * 100 << "%" << endl;
     outStrm << "Best SDA: ";
     population[bestIdx].print(outStrm);// print out the best SDA

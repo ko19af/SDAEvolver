@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
             hyperParameters.push_back(50);     // Population size
             hyperParameters.push_back(3);      // Tournament Selector
             hyperParameters.push_back(1);      // Genetic Algorithm Operator
-            hyperParameters.push_back(100000); // Number of Generations
+            hyperParameters.push_back(1000); // Number of Generations
             hyperParameters.push_back(1);      // Cross-over Operator
             hyperParameters.push_back(0.1);    // Cross-over Rate
             hyperParameters.push_back(1);      // Mutation Operator
