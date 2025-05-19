@@ -43,7 +43,9 @@ int main(int argc, char* argv[]) {
             hyperParameters.push_back(1);      // Mutation Operator
             hyperParameters.push_back(0.1);    // Mutation Rate
             hyperParameters.push_back(30);     // Number of Runs
-            hyperParameters.push_back(0);      // Heurestic Function
+            hyperParameters.push_back(2);      // Heurestic Function
+            hyperParameters.push_back(0);  
+            hyperParameters.push_back(0);  
         }
 
     for (int t = 0; t < 5; t++){

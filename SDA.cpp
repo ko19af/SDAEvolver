@@ -417,11 +417,11 @@ void SDA::print(ostream &to = cout) {
         cout << "Error in SDA Class: print(...): this SDA has not been initialized.";
     }
 
-    to << initState << " <- " << initChar << endl;
+    to << initState << " <- " << initChar << endl; // print the initial state and the starting character
     for (int state = 0; state < numStates; ++state) {
         for (int trans = 0; trans < numChars; ++trans) {
-            to << state << " + " << trans << " -> " << transitions[state][trans] << " [";
-            for (int vec: responses[state][trans]) {
+            to << state << " + " << trans << " -> " << transitions[state][trans] << " [";// print the current state the transition character and then the state being moved to
+            for (int vec: responses[state][trans]) {// print the response from the state change
                 to << " " << vec;
             }
             to << " ]" << endl;

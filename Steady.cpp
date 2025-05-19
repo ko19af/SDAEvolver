@@ -191,7 +191,7 @@ double Steady::distanceFitness(Topology& T){
     double val = 0;// total connection distance in the network
     double excess = 0;// total connection distance in the network minus shortest path form edge to cloud
 
-    for (int y = 0; y < T.tNumNodes; y++){// go thourh all the nodes
+    for (int y = 0; y < T.tNumNodes; y++){// go through all the nodes
         for (int x = 0; x < y; x++){
             if(T.connections[y][x] == 1)excess += T.distance[y][x];// if they are connected add distance to excess
         }
@@ -199,7 +199,7 @@ double Steady::distanceFitness(Topology& T){
 
         // vector<vector<int>> newNet(T.tNumNodes, vector<int>(T.tNumNodes));// new network with minimum connections
         // T.minimumNetwork(newNet, excess);// kursk's algorithm to identify minimum necessary connections
-        vector<pair<int, int>> paths;     // vector holding the edge connecting the cloud nodes to the edge
+    vector<pair<int, int>> paths;// vector holding the edge connecting the cloud nodes to the edge
     for (int x = 0; x < T.numENodes; x++){// for each edge node find the shortest path to a cloud node in the minimum network
         vector<double> sPath(T.tNumNodes, DBL_MAX);// vector recording distance from edge node to all other nodes
         vector<vector<int>> nodes(T.tNumNodes);// record nodes used for the shortest path
@@ -366,11 +366,12 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
 Steady::Steady(Topology& T, ofstream& MyFile, vector<double>& hyperParameters){
     this->SDANumChars = hyperParameters[1];
     this->popSize = hyperParameters[2];
+    this->tournSize = hyperParameters[3];
     this->crossOp = hyperParameters[6];
     this->crossRate = hyperParameters[7];
     this->mutOperator = hyperParameters[8];
     this->mutationRate = hyperParameters[9];
-    this->tournSize = hyperParameters[3];
+    
     this->heurFunction = hyperParameters[11];
 
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
@@ -389,11 +390,11 @@ Steady::Steady(Topology& T, ofstream& MyFile, vector<double>& hyperParameters){
 Steady::Steady(Topology& T, SDA* prePop, int heurAttackFunction, vector<string>& hyperParameters, ofstream& fName){
     this->SDANumChars = stoi(hyperParameters[1]);// set Hyperparameter and SDA settings
     this->popSize = stoi(hyperParameters[2]);
+    this->tournSize = stoi(hyperParameters[3]);
     this->crossOp = stoi(hyperParameters[6]);
     this->crossRate = stod(hyperParameters[7]);
     this->mutOperator = stoi(hyperParameters[8]);
     this->mutationRate = stod(hyperParameters[9]);
-    this->tournSize = stoi(hyperParameters[3]);
     this->heurFunction = stoi(hyperParameters[10]);
     this->preMadePop = prePop;// set preMadePopulation
     this->attackHeuristic = heurAttackFunction;// set attack function
@@ -407,11 +408,11 @@ Steady::Steady(Topology& T, SDA* prePop, int heurAttackFunction, vector<string>&
    Steady::Steady(Topology& T, int heurAttackFunction, vector<double>& hyperParameters, ofstream& fName){
     this->SDANumChars = hyperParameters[1];
     this->popSize = hyperParameters[2];
+    this->tournSize = hyperParameters[3];
     this->crossOp = hyperParameters[6];
     this->crossRate = hyperParameters[7];
     this->mutOperator = hyperParameters[8];
     this->mutationRate = hyperParameters[9];
-    this->tournSize = hyperParameters[3];
     this->heurFunction = hyperParameters[11];
     
     this->preMadePop = T.preMadePop;// set preMadePopulation
