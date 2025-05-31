@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
         to_string((int)hyperParameters[5]) + to_string((int)hyperParameters[6]) + to_string(hyperParameters[7]) + 
         to_string((int)hyperParameters[8]) + to_string(hyperParameters[9]) + to_string((int)hyperParameters[10]) + 
         to_string((int)hyperParameters[11]) + to_string(t) + ".txt";
-        
+
         ofstream MyFile(fName);
         
         string params = "# States: " + to_string((int)hyperParameters[0]) + " # Chars: " + to_string((int)hyperParameters[1])
@@ -72,11 +72,22 @@ int main(int argc, char* argv[]) {
         
         for (int x = 0; x < hyperParameters[10]; x++){// perform the runs
             MyFile << "Run: " << x + 1 << endl;// report the run number
-            Steady(T, MyFile, hyperParameters);
+            Steady(T, MyFile, hyperParameters, false);
         }
         
         MyFile.close();
         
+        if(atoi(argv[14])){
+            string eFName = fName;
+            eFName.insert(7, "Extended_");
+            eFName.insert(6, "_3");
+            ofstream ExtendedFile(eFName);
+            ExtendedFile << params << endl;
+            ExtendedFile << "Topology: " << t + 1 << endl;
+            Steady(T, ExtendedFile, hyperParameters, true);
+            ExtendedFile.close();
+        }
+
         if(atoi(argv[13])){// if performing attack simulations
             AttackSim(T, hyperParameters, fName, params, atoi(argv[14]), atof(argv[15]) / 100);
         }

@@ -287,10 +287,10 @@ int Steady::PrintReport(ostream &outStrm, vector<double> &popFits, SDA* populati
 
     vector<int> c(SDAResponseLength, 0); // vector for holding response from SDA
     population[bestIdx].fillOutput(c, false, cout);// fill vector using SDA
-    if(attackHeuristic == -1)T.preMadePop[T.numPreMadeSDA++] = population[bestIdx];// store the best SDA for the attack simulation
+    if(!extend && attackHeuristic == -1)T.preMadePop[T.numPreMadeSDA++] = population[bestIdx];// store the best SDA for the attack simulation
 
     // Report the best SDA from GA
-    if(addDead) outStrm << "Number of Dead Premade SDAs: " << preMadeDead << "/" << numPreMade << endl;// print number of dead pre-made 
+    if(!extend && addDead) outStrm << "Number of Dead Premade SDAs: " << preMadeDead << "/" << numPreMade << endl;// print number of dead pre-made 
 
     outStrm << "Mutation Rate: " << mutationRate * 100 << "%" << endl;
     outStrm << "Best SDA: ";
@@ -313,18 +313,18 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
 
     if(preMade){// Step .1: load pre-made SDAs
         filled = numPreMade;// adjust population size to create
-        for (int s = 0; s < numPreMade; s++){
+        for (int s = 0; s < numPreMade; s++){// for each premade SDA
             addDead = true;// switch add dead to true so if the SDA died increment dead count
             vector<int> SDAOutput(SDAResponseLength, 0);// vector for holding response from SDA
             preMadePop[s].fillOutput(SDAOutput, false, cout);// fill vector using SDA
-            while(necroticFilter(SDAOutput, T)){// while SDA is dead
+            while(!extend && necroticFilter(SDAOutput, T)){// while SDA is dead
                 if(addDead){// if entering while loop for the first time
                     preMadeDead++;// increment number of premade that died
                     addDead = false;// set adddead to false
                 }
-                SDAOutput = vector<int>(SDAResponseLength, 0);                                        // vector for holding response from SDA
+                SDAOutput = vector<int>(SDAResponseLength, 0);// vector for holding response from SDA
                 preMadePop[s] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAResponseLength); // create a new SDA
-                preMadePop[s].fillOutput(SDAOutput, false, cout);                                     // fill vector using SDA
+                preMadePop[s].fillOutput(SDAOutput, false, cout);// fill vector using SDA
             }
             population[s] = preMadePop[s];// while their is room in the population to add the SDA
             popFits.push_back(CalcFitness(T)); // calculate the fitness of the member
@@ -363,20 +363,28 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
  * This constructor is for use in desiging the network connection layouts
  */
 
-Steady::Steady(Topology& T, ofstream& MyFile, vector<double>& hyperParameters){
+Steady::Steady(Topology& T, ofstream& MyFile, vector<double>& hyperParameters, bool extend){
     this->SDANumChars = hyperParameters[1];
-    this->popSize = hyperParameters[2];
+    this->popSize = extend ? hyperParameters[10] : hyperParameters[2];
     this->tournSize = hyperParameters[3];
     this->crossOp = hyperParameters[6];
     this->crossRate = hyperParameters[7];
     this->mutOperator = hyperParameters[8];
     this->mutationRate = hyperParameters[9];
-    
     this->heurFunction = hyperParameters[11];
+    
+    bool preMade = extend ? true : false;
+    
+    if (extend){// if extending the run with the 30 best
+        this->extend = extend;// set the extend boolean to true
+        this->numPreMade = hyperParameters[10];// set number of SDAs that were premade
+        this->preMadePop = new SDA[numPreMade];//set size of array holding number of premade SDAs
+        for (int x = 0; x < hyperParameters[10]; x++)preMadePop[x] = T.preMadePop[x]; // set preMadePopulation (by performing a deep copy)
+    }
 
-    SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
+    SDAResponseLength = (T.tNumNodes * (T.tNumNodes - 1)) / 2; // assign that value to the SDA response length global variable
 
-    Evolver(hyperParameters[0], hyperParameters[5], T, MyFile);
+    Evolver(hyperParameters[0], hyperParameters[5], T, MyFile, preMade);
 }
 
 /**
@@ -395,10 +403,10 @@ Steady::Steady(Topology& T, SDA* prePop, int heurAttackFunction, vector<string>&
     this->crossRate = stod(hyperParameters[7]);
     this->mutOperator = stoi(hyperParameters[8]);
     this->mutationRate = stod(hyperParameters[9]);
-    this->heurFunction = stoi(hyperParameters[10]);
+    this->heurFunction = stoi(hyperParameters[11]);
     this->preMadePop = prePop;// set preMadePopulation
     this->attackHeuristic = heurAttackFunction;// set attack function
-    this->numPreMade = stoi(hyperParameters[12]);
+    this->numPreMade = stoi(hyperParameters[10]);
 
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
     
@@ -414,11 +422,11 @@ Steady::Steady(Topology& T, SDA* prePop, int heurAttackFunction, vector<string>&
     this->mutOperator = hyperParameters[8];
     this->mutationRate = hyperParameters[9];
     this->heurFunction = hyperParameters[11];
-    
-    this->preMadePop = T.preMadePop;// set preMadePopulation
     this->attackHeuristic = heurAttackFunction;// set attack function
     this->numPreMade = hyperParameters[10];// set number of SDAs that were premade
+    this->preMadePop = new SDA[numPreMade];
 
+    for (int x = 0; x < hyperParameters[10]; x++) preMadePop[x] = T.preMadePop[x]; // set preMadePopulation (by performing a deep copy)
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable
 
     Evolver(hyperParameters[0], hyperParameters[5], T, fName, true);// call the Evolver

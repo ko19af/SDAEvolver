@@ -13,7 +13,7 @@ using namespace std;
 
 class Steady {
     public:
-        explicit Steady(Topology &T, ofstream &MyFile, vector<double>& hyperParameters);
+        explicit Steady(Topology &T, ofstream &MyFile, vector<double>& hyperParameters, bool extend = false);
         explicit Steady(Topology &T, SDA *prePop, int heurAttackFunction, vector<string> &hyperParameters, ofstream &fName);
         explicit Steady(Topology& T, int heurAttackFunction, vector<double>& hyperParameters, ofstream& fName);
 
@@ -41,6 +41,7 @@ class Steady {
         int numPreMade;
         int preMadeDead = 0;// count number of premade SDA's that died
         bool addDead = false;// tells the program if it's counting the number of dead pre-made SDAs and if it's reporting it
+        bool extend = false;// determines if we are taking the 30 best from the inital construction and extending their run
         int attackHeuristic = -1;
         double popWorstFit;
         int heurFunction = 0;
