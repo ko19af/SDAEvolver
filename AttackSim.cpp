@@ -102,7 +102,7 @@ Topology AttackSim::readEData(const std::filesystem::__cxx11::path& filePath, ve
     getline(ReadFile, text); // get the second line from the file
     outputFile << text << endl;// write the Topology used for the experiment
     split(text, ':', tFile); // split the text from the data wanted for getting the topology file name
-    Topology T = Topology(topologies[tFile[0] - '0' - 1], attFunction);// initialize the topology with the correct layout for the file
+    Topology T = Topology(topologies[tFile[0] - '0' - 1]);// initialize the topology with the correct layout for the file
 
     this->population = new SDA[stoi(hyperParameters[12])];
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;;// assign that value to the SDA response length global variable

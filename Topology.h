@@ -14,8 +14,8 @@ using namespace std;
 class Topology {
 public:
     explicit Topology(int x = 10, int y = 10, int starts = 1, int ends = 1, int numNodes = 30, bool verbose = false, int attFunction = -1);
-    explicit Topology(string& fileName, bool verbose = false, int attFunction = -1);
-    explicit Topology(vector<vector<int>>, int attFunction = -1);
+    explicit Topology(string& fileName, bool verbose = false);
+    explicit Topology(vector<vector<int>>);
     void ShortestPath(int position, vector<double>& sPath, vector<vector<int>> &nodes);
     void minimumNetwork(vector<vector<int>> &newNet, double& excess);
     bool setConnections(vector<int>& c, int AttackFunction);
@@ -45,7 +45,7 @@ public:
     SDA *preMadePop; // pre-made SDA population
 
 private:
-    void countNodes(int attFunction = -1);
+    void countNodes();
     void makeEdges(vector<tuple<double, int, int>> &edges);
     int find(int i, vector<int>& parent);
     void unite(int x, int y, vector<int> &parent, vector<int> &rank);

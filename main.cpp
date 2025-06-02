@@ -77,14 +77,17 @@ int main(int argc, char* argv[]) {
         
         MyFile.close();
         
-        if(atoi(argv[14])){
+        if(atoi(argv[16])){
             string eFName = fName;
             eFName.insert(7, "Extended_");
             eFName.insert(6, "_3");
             ofstream ExtendedFile(eFName);
             ExtendedFile << params << endl;
             ExtendedFile << "Topology: " << t + 1 << endl;
-            Steady(T, ExtendedFile, hyperParameters, true);
+            for (int x = 0; x < hyperParameters[10]; x++){// perform the runs
+                ExtendedFile << "Run: " << x + 1 << endl;// report the run number
+                Steady(T, ExtendedFile, hyperParameters, true);
+            }
             ExtendedFile.close();
         }
 

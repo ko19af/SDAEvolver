@@ -25,16 +25,15 @@ Topology::Topology(int x, int y, int starts, int ends, int numNodes, bool verbos
     if(verbose) PrintLayout();
 }
 
-Topology::Topology(string& fileName, bool verbose, int attFunction){
+Topology::Topology(string& fileName, bool verbose){
     readLayout(fileName);// read in the file containing the topology
-    countNodes(attFunction);// count number and type of nodes in the network and initialize data streams and calculate distance
+    countNodes();// count number and type of nodes in the network and initialize data streams and calculate distance
     if (verbose) PrintLayout();
 }
 
-
-Topology::Topology(vector<vector<int>> network, int attFunction){
+Topology::Topology(vector<vector<int>> network){
     this->network = network;
-    countNodes(attFunction);
+    countNodes();
 }
 
 /**
@@ -42,7 +41,7 @@ Topology::Topology(vector<vector<int>> network, int attFunction){
  * initializes the data data streams in the network and calculates the distance between nodes
  */
 
-void Topology::countNodes(int attFunction){
+void Topology::countNodes(){
     this->numENodes = 0;
     this->numCNodes = 0;
     this->numNodes = 0;
@@ -102,9 +101,9 @@ double Topology::round(float var){
 void Topology::EnergyConsumption(double transmissionRate, double recevingRate){
     energyConsumption.clear();// clear the old energy consumption values
 
-    for (int x = numENodes; x < tNumNodes; x++){// for each node
+    for (int x = 0; x < tNumNodes; x++){// for each node
         double incomingData = 0.0;// calculate the total amount of data being transmitted from the node
-        for (int d = 0; d < tNumNodes; d++){ // get incoming traffic and distancec values
+        for (int d = 0; d < tNumNodes; d++){ // get incoming traffic and distance values
             incomingData += trafficMatrix[x][d] * distance[x][d];
         }
         energyConsumption.push_back(round(incomingData * transmissionRate));// multiply the number of MBps being transmitted by the energy consumption cost (0.03 W)
@@ -176,24 +175,18 @@ void Topology::DistributeTraffic(){
             double best = DBL_MAX;// lowest impact
             for (int x = numENodes; x < tNumNodes; x++){// go through all the connections to the node
                 if (node != x && connections[node][x] == 1 && trafficMatrix[node][x] + d < best){
-                    if(layer[insert] < layer[x]){// prioritse sending data to higher layer nodes
-                        insert = x;// sent insert to node that satisfys above parameters
-                        best = trafficMatrix[node][x] + d;// set best as current data plus new data
-                    }else if(layer[insert] == layer[x] && x >= numENodes){// send to equal layer node if it is not an edge node
+                    if(layer[insert] <= layer[x] && x >= numENodes){// sending data to higher (prioritized) or equal level layer (not edge) node
                         insert = x;// sent insert to node that satisfys above parameters
                         best = trafficMatrix[node][x] + d;// set best as current data plus new data
                     }
                 }
             }
 
-            if(insert >= numENodes + numNodes){// if data is sent to a cloud node
-                trafficMatrix[node][insert] += d;// update traffic matrix with the new data transmitted between nodes
-                trafficMatrix[insert][node] += d;// update traffic matrix with the new data transmitted between nodes
-                data[insert].push_back(d);// record packet stream being sent/recived to node
-            } else{// data is sent to another node in network
-                trafficMatrix[node][insert] += d;
-                trafficMatrix[insert][node] += d;
-                data[insert].push_back(d);
+            trafficMatrix[node][insert] += d;// update traffic matrix with the new data transmitted between nodes
+            trafficMatrix[insert][node] += d;// update traffic matrix with the new data transmitted between nodes
+            data[insert].push_back(d);// record packet stream being sent/recived to node
+            
+            if(insert < numENodes + numNodes){// if data is not sent to a cloud node
                 toDistribute[insert].push_back(d);// add data to be distributed from node
                 if(count(toDo.begin(), toDo.end(), insert) < 1) toDo.push_back(insert);// add node to list of nodes that must distribute data (if not already added)
             }
