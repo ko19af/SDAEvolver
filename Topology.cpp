@@ -106,7 +106,8 @@ void Topology::EnergyConsumption(double transmissionRate, double recevingRate){
         for (int d = 0; d < tNumNodes; d++){ // get incoming traffic and distance values
             incomingData += trafficMatrix[x][d] * distance[x][d];
         }
-        energyConsumption.push_back(round(incomingData * transmissionRate));// multiply the number of MBps being transmitted by the energy consumption cost (0.03 W)
+        //energyConsumption.push_back(incomingData);
+        energyConsumption.push_back(incomingData * transmissionRate);// multiply the number of MBps being transmitted by the energy consumption cost (0.03 W)
     }
 }
 

@@ -13,9 +13,9 @@ using namespace std;
 
 class Steady {
     public:
-        explicit Steady(Topology &T, ofstream &MyFile, vector<double>& hyperParameters, bool extend = false);
+        explicit Steady(Topology &T, ofstream &MyFile, vector<int>& hyperParameters, bool extend = false);
         explicit Steady(Topology &T, SDA *prePop, int heurAttackFunction, vector<string> &hyperParameters, ofstream &fName);
-        explicit Steady(Topology& T, int heurAttackFunction, vector<double>& hyperParameters, ofstream& fName);
+        explicit Steady(Topology& T, int heurAttackFunction, vector<int>& hyperParameters, ofstream& fName);
 
     private:
         double distanceFitness(Topology& T);

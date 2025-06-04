@@ -49,7 +49,7 @@ SDA::SDA(int numStates, int numChars, int maxRespLen, int outputLen, int initSta
  * Namely, an SDA with 10 states, a two-character alphabet, responses with up to two characters,
  * and 1000 characters in the output.
  */
-SDA::SDA() : SDA(10, 2, 2, 1000) {}
+SDA::SDA(){}
 
 /**
  * A copy constructor.
@@ -156,53 +156,59 @@ int SDA::randomize() {
  * to this SDA.
  *
  * @param other The SDA being copied
- * @return -1 if there is an error
+ * @return exit code -1 if there is an error
  */
 int SDA::copy(SDA &other) {
     if (initChar < 0) {
         cout << "Error in SDA Class: copy(...): this SDA has not been initialized.";
-        return -1;
+        exit(-1);
     }
     if (other.initChar < 0) {
         cout << "Error in SDA Class: copy(...): other SDA has not been initialized.";
-        return -1;
+        exit(-1);
     }
 
     initChar = other.initChar;
 
-    // Ensure the correct space for the number of transitions and responses.
-    if (numStates != other.numStates) {
-        transitions.reserve(other.numStates);
-        responses.reserve(other.numStates);
-    }
-    numStates = other.numStates;
+    // Ensure number of states match
+    if (numStates != other.numStates) numStates = other.numStates;
+        
+    transitions.reserve(numStates);
+    responses.reserve(numStates);
     initState = other.initState;
 
     // Ensure the correct space for the number of transitions from each state.
-    if (numChars != other.numChars) {
-        for (auto &stateTrans: transitions) {
-            stateTrans.reserve(other.numChars);
-        }
-        for (auto &stateResp: responses) {
-            stateResp.reserve(other.numChars);
-        }
-    }
-    numChars = other.numChars;
+    if (numChars != other.numChars) numChars = other.numChars;
+    for (auto &stateTrans: transitions) stateTrans.reserve(numChars);
+    for (auto &stateResp: responses) stateResp.reserve(numChars);
 
     // Ensure the correct space for the number of characters in each response.
-    if (maxRespLen != other.maxRespLen) {
-        for (auto &stateResp: responses) {
-            for (auto &resp: stateResp) {
-                resp.reserve(other.maxRespLen);
-            }
-        }
+    if (maxRespLen != other.maxRespLen) maxRespLen = other.maxRespLen;
+    for (auto &stateResp: responses) {
+        for (auto &resp: stateResp) resp.reserve(maxRespLen);
     }
-
-    maxRespLen = other.maxRespLen;
+    
     outputLen = other.outputLen;
     verbose = other.verbose;
-    transitions = other.transitions;
-    responses = other.responses;
+    //transitions = other.transitions;
+
+    for(vector<int> row : other.transitions){
+        vector<int> newRow;
+        for(int x : row)newRow.push_back(x);
+        transitions.push_back(row);
+    }
+
+    //responses = other.responses;
+    for(vector<vector<int>> row: other.responses){
+        vector<vector<int>> newResponses;
+        for(vector<int> subRow: row){
+            vector<int> newResponse;
+            for(int x : subRow) newResponse.push_back(x);
+            newResponses.push_back(newResponse);
+        }
+        responses.push_back(newResponses);
+    }
+
     if (verbose) cout << "SDA Copied." << endl;
     return 0;
 }

@@ -51,7 +51,7 @@ AttackSim::AttackSim(int attFunction, double percentAtt, bool verbose){
     }
 }
 
-AttackSim::AttackSim(Topology& T, vector<double>& hyperParameters, string fName, string params, int attFunction, double percentAtt, bool verbose){
+AttackSim::AttackSim(Topology& T, vector<int>& hyperParameters, string fName, string params, int attFunction, double percentAtt, bool verbose){
 
     string file = fName.erase(0, 7); // get the name of the file being attacked
     string attParam = string(to_string(attFunction) + to_string(percentAtt));
