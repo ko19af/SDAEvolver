@@ -46,7 +46,8 @@ class Steady {
         double popWorstFit;
         int heurFunction = 0;
         int SDANumChars = 2;
-        int SDAResponseLength = 2;
+        int SDAResponseLength = 1000;
+        int SDAMaxResponseLength = 2;
         int popSize = 100;
         int tournSize = 7;
         int tournCandidates = 4;

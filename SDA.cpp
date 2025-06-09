@@ -172,7 +172,7 @@ int SDA::copy(SDA &other) {
 
     // Ensure number of states match
     if (numStates != other.numStates) numStates = other.numStates;
-        
+
     transitions.reserve(numStates);
     responses.reserve(numStates);
     initState = other.initState;
@@ -185,7 +185,7 @@ int SDA::copy(SDA &other) {
     // Ensure the correct space for the number of characters in each response.
     if (maxRespLen != other.maxRespLen) maxRespLen = other.maxRespLen;
     for (auto &stateResp: responses) {
-        for (auto &resp: stateResp) resp.reserve(maxRespLen);
+         for (auto &resp: stateResp) resp.reserve(maxRespLen);
     }
     
     outputLen = other.outputLen;

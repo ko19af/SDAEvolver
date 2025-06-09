@@ -74,7 +74,7 @@ AttackSim::AttackSim(Topology& T, vector<int>& hyperParameters, string fName, st
             outputFile << t + 1 << "\t";
     outputFile << endl;
 
-    for (int x = 0; x < hyperParameters[10]; x++){ // perform the runs
+    for (int x = 0; x < hyperParameters[11]; x++){ // perform the runs
         outputFile << "Run: " << x + 1 << endl;
         Steady(T, attFunction, hyperParameters, outputFile);
     }
@@ -181,7 +181,6 @@ void AttackSim::performTowerAttack(vector<vector<int>>& connections, vector<bool
         if(attackedTowers[tow]){// if the tower is being attacked
             fill(connections[tow].begin(), connections[tow].end(), 0);// set the connectctions in the attacked tower as zero
             for(vector<int>& row : connections) row[tow] = 0;// remove the connections in the attacked towers coloumn
-            
         }
     }
 }
