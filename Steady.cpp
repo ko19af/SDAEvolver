@@ -171,13 +171,19 @@ bool Steady::necroticFilter(vector<int>& connections, Topology& T){
 
 double Steady::dataFitness(Topology& T){
     double val = 0.0;// is the fitness of the data being passed through the nodes in the topology
+    int utilNodes = 0;// counts the number of utilised nodes
 
     for (int y = T.numENodes; y < T.tNumNodes; y++){// for each node that is not an edge node
         double d = 0.0;// varialbe to record the amount of data a node is receiving
-        for (int x = 0; x < T.tNumNodes; x++) d += T.trafficMatrix[y][x];// add up all the data the node is receving
-        if(d != 0) val += d / T.data[y].size();// average out the amount of data based on the amount of packet streams it is receving
+        //for (int x = 0; x < T.tNumNodes; x++) d += T.trafficMatrix[y][x];// add up all the data the node is receving
+        for(double x : T.data[y]) d += x;
+        if(d != 0){
+            val += d / T.data[y].size();// average out the amount of data based on the amount of packet streams it is receving
+            utilNodes++;
+        } 
     }
-    return val / (T.tNumNodes-T.numENodes);// return the averaged value for all the nodes in the network
+    return val / utilNodes;// return the average value based on the number of utilised nodes in the network
+    //return val / (T.tNumNodes-T.numENodes);// return the averaged value for all the nodes in the network
 }
 
 /**
