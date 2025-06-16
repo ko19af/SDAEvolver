@@ -95,7 +95,6 @@ int main(int argc, char* argv[]) {
         if(atoi(argv[14])){// if performing attack simulations
             AttackSim(T, hyperParameters, fName, params, atoi(argv[15]), atof(argv[16]) / 100);
         }
-
     delete[] T.preMadePop;
     }
     return 0;
