@@ -391,6 +391,7 @@ Steady::Steady(Topology& T, ofstream& MyFile, vector<int>& hyperParameters, bool
     SDAResponseLength = (T.tNumNodes * (T.tNumNodes - 1)) / 2; // assign that value to the SDA response length global variable
 
     Evolver(hyperParameters[0], hyperParameters[6], T, MyFile, preMade);
+    if(extend) delete[] preMadePop;
 }
 
 /**
@@ -437,4 +438,5 @@ Steady::Steady(Topology& T, SDA* prePop, int heurAttackFunction, vector<string>&
     SDAResponseLength = (T.tNumNodes*(T.tNumNodes-1))/2;// assign that value to the SDA response length global variable
 
     Evolver(hyperParameters[0], hyperParameters[6], T, fName, true);// call the Evolver
+    delete[] preMadePop;
    }

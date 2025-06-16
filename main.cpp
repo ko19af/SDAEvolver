@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
         hyperParameters.push_back(atoi(argv[12]));
         hyperParameters.push_back(atoi(argv[13]));
     }else{// initialize the variables in case none are passed on the cmd line
+        // 6 2 2 250 3 1 100000 1 90 1 90 30 1 1 1 20 0 
             hyperParameters.push_back(6);      // SDA number of states
             hyperParameters.push_back(2);      // SDA number of characters
             hyperParameters.push_back(2);      // SDA max response length
@@ -40,9 +41,9 @@ int main(int argc, char* argv[]) {
             hyperParameters.push_back(1);      // Genetic Algorithm Operator
             hyperParameters.push_back(1000);   // Number of Generations
             hyperParameters.push_back(1);      // Cross-over Operator
-            hyperParameters.push_back(10);     // Cross-over Rate
+            hyperParameters.push_back(90);     // Cross-over Rate
             hyperParameters.push_back(1);      // Mutation Operator
-            hyperParameters.push_back(10);     // Mutation Rate
+            hyperParameters.push_back(90);     // Mutation Rate
             hyperParameters.push_back(30);     // Number of Runs
             hyperParameters.push_back(1);      // Heurestic Function  
         }
