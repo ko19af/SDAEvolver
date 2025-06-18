@@ -328,7 +328,7 @@ int Steady::Evolver(int SDANumStates, int numMatingEvents, Topology& T, ostream&
                     addDead = false;// set adddead to false
                 }
                 SDAOutput = vector<int>(SDAResponseLength, 0);// vector for holding response from SDA
-                preMadePop[s] = SDA(SDANumStates, SDANumChars, SDAResponseLength, SDAMaxResponseLength); // create a new SDA
+                preMadePop[s] = SDA(SDANumStates, SDANumChars, SDAMaxResponseLength, SDAResponseLength); // create a new SDA
                 preMadePop[s].fillOutput(SDAOutput, false, cout);// fill vector using SDA
             }
             population[s] = preMadePop[s];// while their is room in the population to add the SDA

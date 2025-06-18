@@ -194,7 +194,7 @@ int SDA::copy(SDA &other) {
 
     for(vector<int> row : other.transitions){
         vector<int> newRow;
-        for(int x : row)newRow.push_back(x);
+        for(int x : row) newRow.push_back(x);
         transitions.push_back(row);
     }
 
