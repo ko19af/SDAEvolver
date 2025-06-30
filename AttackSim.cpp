@@ -158,7 +158,7 @@ bool AttackSim::split(string input, char del, string& c){
  */
 
 void AttackSim::selectAttackedTowers(int numTowers, Topology& T){
-    this->attTowers = vector<bool>(T.tNumNodes, 0);// vector determing which towers are attacked
+    this->attTowers = vector<bool>(T.tNumNodes, false);// vector determing which towers are attacked
     for (int x = 0; x < numTowers; x++){// for the number of towers being attacked
         int aTow = 0;
         do{

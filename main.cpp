@@ -10,6 +10,7 @@
 #include "AttackSim.h"
 #include "Steady.h"
 #include "vector"
+#include <chrono>
 
 using namespace std;
 
@@ -32,23 +33,25 @@ int main(int argc, char* argv[]) {
         hyperParameters.push_back(atoi(argv[12]));
         hyperParameters.push_back(atoi(argv[13]));
     }else{// initialize the variables in case none are passed on the cmd line
-        // 6 2 2 250 3 1 100000 1 90 1 90 30 1 1 1 20 0 
             hyperParameters.push_back(6);      // SDA number of states
             hyperParameters.push_back(2);      // SDA number of characters
             hyperParameters.push_back(2);      // SDA max response length
-            hyperParameters.push_back(50);     // Population size
+            hyperParameters.push_back(250);     // Population size
             hyperParameters.push_back(3);      // Tournament Selector
             hyperParameters.push_back(1);      // Genetic Algorithm Operator
-            hyperParameters.push_back(1000);   // Number of Generations
+            hyperParameters.push_back(100000);   // Number of Generations
             hyperParameters.push_back(1);      // Cross-over Operator
             hyperParameters.push_back(90);     // Cross-over Rate
             hyperParameters.push_back(1);      // Mutation Operator
-            hyperParameters.push_back(90);     // Mutation Rate
+            hyperParameters.push_back(50);     // Mutation Rate
             hyperParameters.push_back(30);     // Number of Runs
-            hyperParameters.push_back(1);      // Heurestic Function  
+            hyperParameters.push_back(0);      // Heurestic Function  
         }
 
+        
     for (int t = 0; t < 5; t++){
+        auto start_time = chrono::high_resolution_clock::now(); // Capture start time
+
         string path = "Topologies/Layout_"+to_string(t)+".txt";
         Topology T = Topology(path, false); // initialize the topology
         T.preMadePop = new SDA[(int)hyperParameters[11]];
@@ -75,8 +78,10 @@ int main(int argc, char* argv[]) {
             MyFile << "Run: " << x + 1 << endl;// report the run number
             Steady(T, MyFile, hyperParameters, false);
         }
-        
-        MyFile.close();
+        auto end_time = chrono::high_resolution_clock::now(); // Capture end time
+        auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time); // Calculate duration
+        MyFile << "Elapsed time: " << duration.count() << endl;// record time on file
+        MyFile.close();// close file
         
         if(atoi(argv[17])){
             string eFName = fName;
@@ -96,6 +101,7 @@ int main(int argc, char* argv[]) {
             AttackSim(T, hyperParameters, fName, params, atoi(argv[15]), atof(argv[16]) / 100);
         }
     delete[] T.preMadePop;
+    
     }
     return 0;
 }

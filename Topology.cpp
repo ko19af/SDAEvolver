@@ -490,7 +490,15 @@ bool Topology::setConnections(vector<int>& c, int attackFunction){
     for (int x = 0; x < numENodes; x++){// go through the edge nodes
         if(layer[x] == -1) return true;// if edge node is not connected to cloud node network is dead
     }
-    
+
+    if(attackFunction == 2){// check that the attacked towers are connected to the cloud
+        for (int x = 0; x < attTowers.size(); x++){
+            if(attTowers[x]){
+                if(layer[x] == -1) return true;
+            }
+        }
+    }
+
     return false;// return true if all edge nodes connect to a cloud node
 }
 
